@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Knex Repo Dashboard</title>
+  <title>Developer's Dashboard · Repo Triage</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop stop-color='%234de1d3' offset='0%25'/%3E%3Cstop stop-color='%23f36565' offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect rx='12' ry='12' x='4' y='4' width='56' height='56' fill='%2311192f' stroke='%234de1d3' stroke-width='3'/%3E%3Cpath d='M18 20h28v5H18zm0 10h18v5H18zm0 10h12v5H18z' fill='url(%23g)'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -598,7 +599,7 @@
     const DEFAULTS = { repo: 'knex/knex', dri: 'DRI:@', handle: '@me', token: '' };
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
-    const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}`;
+    const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`;
 
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
