@@ -736,8 +736,11 @@
     function addTopMetaLines(cardState, item, state, li) {
       const id = cardState.cfg.id;
       const lines = [];
-      if (id === 'prs-with-dri') {
+      if (id === 'prs-with-dri' || id === 'prs-dri-no-assignee') {
         lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
+      }
+      if (id === 'prs-no-dri') {
+        lines.push(`Assignee: ${extractAssignee(item)}`);
       }
       if (id === 'prs-dri-me' || id === 'prs-dri-waiting' || id === 'prs-mine') {
         lines.push(`Assignee: ${extractAssignee(item)}`);
@@ -846,11 +849,24 @@
         a.target = '_blank';
         a.rel = 'noopener';
         const meta = createEl('div', 'meta');
-        const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
-        const parts = [`${item.user?.login || 'unknown'} · updated ${updated}`];
-        meta.textContent = parts.join(' · ');
-        li.append(a, meta);
-        list.appendChild(li);
+      const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
+      const parts = [`${item.user?.login || 'unknown'} · updated ${updated}`];
+      if (cardState.cfg.id === 'issues-assigned') {
+        parts.unshift(`Assignee: ${extractAssignee(item)}`);
+      }
+      if (cardState.cfg.id === 'issues-unlabeled') {
+        const assignee = extractAssignee(item);
+        if (assignee !== 'unassigned') {
+          parts.unshift(`Assignee: ${assignee}`);
+        }
+        const driBody = item.body ? extractDri(item, state?.driToken) : null;
+        if (driBody && driBody !== 'not found') {
+          parts.unshift(`DRI: ${driBody}`);
+        }
+      }
+      meta.textContent = parts.join(' · ');
+      li.append(a, meta);
+      list.appendChild(li);
       });
     }
 
