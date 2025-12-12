@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Knex Repo Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1224;
+      --panel: #11182d;
+      --card: #151f37;
+      --accent: #4de1d3;
+      --muted: #9fb0d3;
+      --text: #e7ecfa;
+      --warn: #f8b92a;
+      --error: #f36565;
+      --shadow: 0 20px 45px rgba(7, 10, 25, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 10%, rgba(77, 225, 211, 0.12), transparent 28%),
+        radial-gradient(circle at 90% 20%, rgba(243, 101, 101, 0.12), transparent 30%),
+        radial-gradient(circle at 30% 80%, rgba(248, 185, 42, 0.12), transparent 32%),
+        var(--bg);
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 20px 64px;
+    }
+
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.02em;
+    }
+
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    .controls {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 12px 14px;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    details.advanced {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 8px 10px 10px;
+    }
+
+    details.advanced summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      outline: none;
+      list-style: none;
+    }
+
+    details.advanced summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.advanced[open] summary {
+      color: var(--text);
+    }
+
+    .advanced-grid {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      min-width: 200px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(77, 225, 211, 0.18);
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(77, 225, 211, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(77, 225, 211, 0.35);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #7af1e8);
+      color: #0b1528;
+      box-shadow: 0 10px 25px rgba(77, 225, 211, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(77, 225, 211, 0.4);
+    }
+
+    .mini-btn {
+      background: rgba(77, 225, 211, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(77, 225, 211, 0.5);
+      border-radius: 9px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border 0.1s ease;
+    }
+
+    .mini-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(77, 225, 211, 0.25);
+      border-color: rgba(77, 225, 211, 0.8);
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status[data-state="error"] {
+      color: var(--error);
+    }
+
+    .status[data-state="ok"] {
+      color: var(--accent);
+    }
+
+    section {
+      margin-top: 22px;
+    }
+
+    section h2 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px 16px 14px 16px;
+      color: inherit;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 230px;
+    }
+
+    .card[data-tone="warn"] {
+      border-color: rgba(248, 185, 42, 0.5);
+    }
+
+    .card[data-tone="error"] {
+      border-color: rgba(243, 101, 101, 0.65);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(77, 225, 211, 0.5);
+      box-shadow: 0 18px 30px rgba(4, 8, 18, 0.55);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .count-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .header-actions .mini-btn {
+      margin-left: 4px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .card p {
+      margin: 0;
+      color: #c0d0f0;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 2px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .item-list li {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .item-list a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+
+    .query-hint {
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-word;
+      flex: 1;
+      text-align: right;
+    }
+
+    .empty, .error-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .error-text {
+      color: var(--error);
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      input {
+        min-width: 100%;
+      }
+
+      .controls {
+        width: 100%;
+      }
+
+      .card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .query-hint {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title">
+        <div class="pill-row">
+          <span class="pill">Developer's</span>
+          <span class="pill">Dashboard</span>
+        </div>
+        <h1>Repository triage snapshot</h1>
+        <p>Live counts and recent items for the core searches. Adjust the repo or the DRI token if you want to reuse this
+          for another project.</p>
+      </div>
+      <div class="controls">
+        <div class="control-row">
+          <label>Your handle (with @)
+            <input id="handle" type="text" value="@me" aria-label="Handle" />
+          </label>
+          <label>GitHub token (optional, kept in memory)
+            <input id="token" type="password" placeholder="ghp_xxx" aria-label="GitHub token" />
+          </label>
+        </div>
+        <details class="advanced">
+          <summary>Advanced (repo &amp; DRI token)</summary>
+          <div class="advanced-grid">
+            <label>Repository
+              <input id="repo" type="text" value="knex/knex" aria-label="Repository" />
+            </label>
+            <label>DRI token in PR body
+              <input id="dri" type="text" value="DRI:@" aria-label="DRI token" />
+            </label>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <section>
+      <div class="section-header">
+        <h2>Your pull requests</h2>
+        <div class="actions">
+          <button id="load">Load</button>
+          <div id="status" class="status" aria-live="polite">Not loaded</div>
+        </div>
+      </div>
+      <div class="grid" id="prs-grid"></div>
+    </section>
+
+    <section>
+      <h2>PR triaging</h2>
+      <div class="grid" id="triage-grid"></div>
+    </section>
+
+    <section>
+      <h2>Issues</h2>
+      <div class="grid" id="issues-grid"></div>
+    </section>
+  </div>
+
+  <script>
+    const config = [
+      {
+        id: 'issues-unlabeled',
+        section: 'issues',
+        label: 'Untriaged',
+        title: 'Open issues without labels',
+        desc: 'Zero labels attached. Likely need triage.',
+        query: 'is:issue is:open no:label'
+      },
+      // {
+      //   id: 'issues-no-assignee',
+      //   section: 'issues',
+      //   label: 'Idle',
+      //   title: 'Open issues without assignee',
+      //   desc: 'Issues not being actively worked on.',
+      //   query: 'is:issue is:open no:assignee'
+      // },
+      {
+        id: 'issues-assigned',
+        section: 'issues',
+        label: 'In Progress',
+        title: 'Open issues with an assignee',
+        desc: 'Issues that are currently owned.',
+        query: 'is:issue is:open assignee:*'
+      },
+      {
+        id: 'issues-mine',
+        section: 'issues',
+        label: 'Mine',
+        title: 'Open issues assigned to you',
+        desc: 'Issues where you are the assignee.',
+        query: 'is:issue is:open assignee:__HANDLE_BARE__'
+      },
+      {
+        id: 'prs-mine',
+        section: 'pulls',
+        label: 'Blocking',
+        title: 'PRs assigned to you',
+        desc: 'You are blocking these PRs as assignee.',
+        query: 'is:pr is:open assignee:__HANDLE_BARE__'
+      },
+      {
+        id: 'prs-dri-me',
+        section: 'pulls',
+        label: 'DRI: You',
+        title: 'PRs where you are DRI',
+        desc: 'PR body lists you as DRI.',
+        query: 'is:pr is:open "__DRI_HANDLE__"'
+      },
+      {
+        id: 'prs-dri-waiting',
+        section: 'pulls',
+        label: 'DRI waiting',
+        title: 'PRs where you are DRI and not assignee',
+        desc: 'You are DRI but not assigned, so waiting on others.',
+        query: 'is:pr is:open "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
+      },
+      {
+        id: 'prs-no-dri',
+        section: 'triage',
+        label: 'Unowned',
+        tone: 'warn',
+        title: 'Open PRs with no DRI',
+        desc: 'PR body does not declare a DRI. Completely unowned.',
+        query: 'is:pr is:open in:body NOT "__DRI__"'
+      },
+      {
+        id: 'prs-with-dri',
+        section: 'triage',
+        label: 'Owned',
+        title: 'Open PRs with a DRI',
+        desc: 'PR body includes a DRI tag.',
+        query: 'is:pr is:open "__DRI__"'
+      },
+      {
+        id: 'prs-dri-no-assignee',
+        section: 'triage',
+        label: 'Mismatch',
+        tone: 'error',
+        title: 'PRs with DRI but no assignee',
+        desc: 'DRI declared in body but missing assignee. Likely an error.',
+        query: 'is:pr is:open "__DRI__" no:assignee'
+      }
+    ];
+
+    const DEFAULTS = { repo: 'knex/knex', dri: 'DRI:@', handle: '@me', token: '' };
+    const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
+    const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
+    const STORAGE_KEY = 'knexRepoDashSettings';
+
+    const repoInput = document.getElementById('repo');
+    const driInput = document.getElementById('dri');
+    const handleInput = document.getElementById('handle');
+    const tokenInput = document.getElementById('token');
+    const loadBtn = document.getElementById('load');
+    const statusEl = document.getElementById('status');
+    const grids = {
+      issues: document.getElementById('issues-grid'),
+      pulls: document.getElementById('prs-grid'),
+      triage: document.getElementById('triage-grid')
+    };
+
+    const cards = new Map();
+    let lastFetchAt = 0;
+
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const createEl = (tag, className, textContent) => {
+      const el = document.createElement(tag);
+      if (className) el.className = className;
+      if (typeof textContent === 'string') el.textContent = textContent;
+      return el;
+    };
+
+    const setListPlaceholder = (list, text, cls = 'empty') => {
+      list.innerHTML = '';
+      const li = createEl('li', cls, text);
+      list.appendChild(li);
+    };
+
+    async function rateLimit(token) {
+      if (token) return;
+      const now = Date.now();
+      const wait = Math.max(0, NO_TOKEN_DELAY_MS - (now - lastFetchAt));
+      if (wait > 0) {
+        await sleep(wait);
+      }
+    }
+
+    function normalizeHandle(raw) {
+      const trimmed = (raw || '').trim();
+      if (!trimmed) return DEFAULTS.handle;
+      return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
+    }
+
+    function loadSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        if (saved.repo) repoInput.value = saved.repo;
+        if (saved.dri) driInput.value = saved.dri;
+        if (saved.handle) handleInput.value = normalizeHandle(saved.handle);
+        if (saved.token) tokenInput.value = saved.token;
+      } catch (_) {
+        // ignore malformed storage
+      }
+      if (!repoInput.value) repoInput.value = DEFAULTS.repo;
+      if (!driInput.value) driInput.value = DEFAULTS.dri;
+      if (!handleInput.value) handleInput.value = DEFAULTS.handle;
+      if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
+    }
+
+    function saveSettings() {
+      const data = {
+        repo: repoInput.value.trim(),
+        dri: driInput.value.trim(),
+        handle: normalizeHandle(handleInput.value),
+        token: tokenInput.value.trim()
+      };
+      repoInput.value = data.repo || DEFAULTS.repo;
+      driInput.value = data.dri || DEFAULTS.dri;
+      handleInput.value = data.handle;
+      tokenInput.value = data.token;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function getState() {
+      const repo = repoInput.value.trim() || DEFAULTS.repo;
+      const driToken = driInput.value.trim() || DEFAULTS.dri;
+      const handle = normalizeHandle(handleInput.value);
+      const handleBare = handle.replace(/^@+/, '');
+      return { repo, driToken, handle, handleBare };
+    }
+
+    function setStatus(text, state = '') {
+      statusEl.textContent = text;
+      statusEl.dataset.state = state;
+    }
+
+    function buildQuery(cfg, state) {
+      const query = cfg.query
+        .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
+        .replace(/__HANDLE__/g, state.handle)
+        .replace(/__HANDLE_BARE__/g, state.handleBare)
+        .replace(/__DRI__/g, state.driToken)
+        .trim();
+      const repoClause = state.repo ? ` repo:${state.repo}` : '';
+      return query + repoClause;
+    }
+
+    function buildSearchUrl(state, cfg) {
+      const path = cfg.section === 'issues' ? 'issues' : 'pulls';
+      const repo = state.repo || DEFAULTS.repo;
+      return `https://github.com/${repo}/${path}?q=${encodeURIComponent(buildQuery(cfg, state))}`;
+    }
+
+    function makeCard(cfg) {
+      const card = createEl('article', 'card');
+      if (cfg.tone) card.dataset.tone = cfg.tone;
+
+      const header = createEl('div', 'card-header');
+      const label = createEl('div', 'label', cfg.label);
+      const actions = createEl('div', 'header-actions');
+      const count = createEl('div', 'count-pill', '–');
+      const reloadBtn = createEl('button', 'mini-btn', 'Reload');
+      reloadBtn.type = 'button';
+      reloadBtn.title = 'Reload this card only';
+      actions.append(count, reloadBtn);
+      header.append(label, actions);
+
+      const h3 = createEl('h3', '', cfg.title);
+      const desc = createEl('p', '', cfg.desc);
+
+      const list = createEl('ul', 'item-list');
+      setListPlaceholder(list, 'Not loaded yet.');
+
+      const footer = createEl('div', 'card-footer');
+      const searchLink = createEl('a', 'cta', 'Open search');
+      searchLink.target = '_blank';
+      searchLink.rel = 'noopener';
+      const hint = createEl('div', 'query-hint');
+      footer.append(searchLink, hint);
+
+      card.append(header, h3, desc, list, footer);
+
+      const cardState = { cfg, card, count, list, searchLink, hint, reloadBtn };
+      cards.set(cfg.id, cardState);
+      grids[cfg.section].appendChild(card);
+      reloadBtn.addEventListener('click', async () => {
+        const state = getState();
+        const token = tokenInput.value.trim();
+        setStatus(`Refreshing "${cfg.label}"…`);
+        try {
+          await refreshCard(cardState, state, token);
+          setStatus('Updated.', 'ok');
+        } catch (err) {
+          setStatus(err.message, 'error');
+        }
+      });
+    }
+
+    function renderQueries() {
+      const state = getState();
+      cards.forEach(({ cfg, searchLink, hint }) => {
+        const query = buildQuery(cfg, state);
+        searchLink.href = buildSearchUrl(state, cfg);
+        hint.textContent = query;
+      });
+    }
+
+    async function fetchSearch(query, token) {
+      const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=8&sort=updated&order=desc`;
+      const headers = {
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+      if (token) {
+        headers['Authorization'] = token.startsWith('gh') ? `token ${token}` : `Bearer ${token}`;
+      }
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body.message || res.statusText;
+        throw new Error(`${res.status}: ${msg}`);
+      }
+      return res.json();
+    }
+
+    function renderItems(cardState, items) {
+      const list = cardState.list;
+      if (!items || items.length === 0) {
+        setListPlaceholder(list, 'No items found.');
+        return;
+      }
+      list.innerHTML = '';
+      items.forEach((item) => {
+        const li = createEl('li');
+        const a = createEl('a', null, `#${item.number} ${item.title}`);
+        a.href = item.html_url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        const meta = createEl('div', 'meta');
+        const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
+        meta.textContent = `${item.user?.login || 'unknown'} · updated ${updated}`;
+        li.append(a, meta);
+        list.appendChild(li);
+      });
+    }
+
+    async function refreshCard(cardState, state, token) {
+      const query = buildQuery(cardState.cfg, state);
+      cardState.count.textContent = '…';
+      setListPlaceholder(cardState.list, 'Loading…');
+      try {
+        await rateLimit(token);
+        lastFetchAt = Date.now();
+        const data = await fetchSearch(query, token);
+        cardState.count.textContent = data.total_count?.toLocaleString?.() || data.total_count || '0';
+        renderItems(cardState, data.items || []);
+      } catch (err) {
+        cardState.count.textContent = '!';
+        setListPlaceholder(cardState.list, err.message, 'error-text');
+        throw err;
+      }
+    }
+
+    async function refreshAll() {
+      const token = tokenInput.value.trim();
+      const state = getState();
+      setStatus(`Refreshing ${cards.size} searches…`);
+      let errors = 0;
+      const delay = token ? SEARCH_DELAY_MS : NO_TOKEN_DELAY_MS;
+      const states = Array.from(cards.values());
+      for (let i = 0; i < states.length; i += 1) {
+        const cardState = states[i];
+        try {
+          await refreshCard(cardState, state, token);
+        } catch (err) {
+          errors += 1;
+        }
+        // stagger requests to respect search secondary rate limits
+        if (i < states.length - 1) {
+          await sleep(delay);
+        }
+      }
+      if (errors > 0) {
+        setStatus(`Completed with ${errors} error(s).`, 'error');
+      } else {
+        setStatus('Updated.', 'ok');
+      }
+    }
+
+    function init() {
+      loadSettings();
+      config.forEach(makeCard);
+      renderQueries();
+
+      const persistAndRender = () => {
+        saveSettings();
+        renderQueries();
+      };
+
+      repoInput.addEventListener('input', persistAndRender);
+      driInput.addEventListener('input', persistAndRender);
+      handleInput.addEventListener('input', persistAndRender);
+      tokenInput.addEventListener('input', persistAndRender);
+      repoInput.addEventListener('change', persistAndRender);
+      driInput.addEventListener('change', persistAndRender);
+      handleInput.addEventListener('change', persistAndRender);
+      tokenInput.addEventListener('change', persistAndRender);
+      loadBtn.addEventListener('click', refreshAll);
+    }
+
+    init();
+  </script>
+</body>
+</html>
