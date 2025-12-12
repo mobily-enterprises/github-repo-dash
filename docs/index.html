@@ -739,12 +739,14 @@
       if (id === 'prs-with-dri' || id === 'prs-dri-no-assignee') {
         lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
       }
+      if (id === 'prs-with-dri') {
+        lines.push(`Assignee: ${extractAssignee(item)}`);
+      }
       if (id === 'prs-no-dri') {
         lines.push(`Assignee: ${extractAssignee(item)}`);
       }
-      if (id === 'prs-dri-me' || id === 'prs-dri-waiting' || id === 'prs-mine') {
+      if (id === 'prs-dri-me') {
         lines.push(`Assignee: ${extractAssignee(item)}`);
-        lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
       }
       lines.forEach((text) => {
         const line = createEl('div', 'meta', text);
