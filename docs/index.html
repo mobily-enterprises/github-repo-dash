@@ -553,20 +553,20 @@
         query: 'is:pr is:open assignee:__HANDLE_BARE__'
       },
       {
-        id: 'prs-dri-me',
-        section: 'pulls',
-        label: 'DRI: You',
-        title: 'PRs where you are DRI',
-        desc: 'PR body lists you as DRI.',
-        query: 'is:pr is:open "__DRI_HANDLE__"'
-      },
-      {
         id: 'prs-dri-waiting',
         section: 'pulls',
         label: 'DRI waiting',
         title: 'PRs where you are DRI and not assignee',
         desc: 'You are DRI but not assigned, so waiting on others.',
         query: 'is:pr is:open "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
+      },
+      {
+        id: 'prs-dri-me',
+        section: 'pulls',
+        label: 'DRI: You',
+        title: 'PRs where you are DRI',
+        desc: 'PR body lists you as DRI.',
+        query: 'is:pr is:open "__DRI_HANDLE__"'
       },
       {
         id: 'prs-no-dri',
