@@ -805,15 +805,21 @@
       list.innerHTML = '';
       items.forEach((item) => {
         const li = createEl('li');
-        const bodyMeta = [];
         if (cardState.cfg.id === 'prs-with-dri') {
           const token = state?.driToken || 'DRI:@';
           const regex = new RegExp(`${escapeRegExp(token)}\\s*([^\\s]+)`, 'i');
           const match = item.body ? item.body.match(regex) : null;
-          const dri = match?.[1] ? match[1].startsWith('@') ? match[1] : `@${match[1]}` : 'not found';
+          const dri = match?.[1] ? (match[1].startsWith('@') ? match[1] : `@${match[1]}`) : 'not found';
           const driLine = createEl('div', 'meta', `DRI: ${dri}`);
           driLine.style.fontWeight = '700';
           li.appendChild(driLine);
+        }
+        if (cardState.cfg.id === 'prs-dri-me' || cardState.cfg.id === 'prs-dri-waiting') {
+          const assignees = item.assignees || [];
+          const first = assignees[0]?.login ? `@${assignees[0].login}` : 'unassigned';
+          const assigneeLine = createEl('div', 'meta', `Assignee: ${first}`);
+          assigneeLine.style.fontWeight = '700';
+          li.appendChild(assigneeLine);
         }
         const a = createEl('a', null, `#${item.number} ${item.title}`);
         a.href = item.html_url;
