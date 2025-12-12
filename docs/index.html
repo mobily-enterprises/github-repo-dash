@@ -590,9 +590,9 @@
         section: 'triage',
         label: 'Mismatch',
         tone: 'error',
-        title: 'PRs with DRI but no assignee',
-        desc: 'DRI declared in body but missing assignee. Likely an error.',
-        query: 'is:pr is:open "__DRI__" no:assignee'
+        title: 'PRs with assignee but no DRI',
+        desc: 'Assigned but missing a declared DRI. Likely an error.',
+        query: 'is:pr is:open assignee:* in:body NOT "__DRI__"'
       }
     ];
 
