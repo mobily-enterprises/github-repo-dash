@@ -637,6 +637,8 @@
       list.appendChild(li);
     };
 
+    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     async function rateLimit(token) {
       if (token) return;
       const now = Date.now();
@@ -794,7 +796,7 @@
       return res.json();
     }
 
-    function renderItems(cardState, items) {
+    function renderItems(cardState, items, state) {
       const list = cardState.list;
       if (!items || items.length === 0) {
         setListPlaceholder(list, 'No items found.');
@@ -809,7 +811,15 @@
         a.rel = 'noopener';
         const meta = createEl('div', 'meta');
         const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
-        meta.textContent = `${item.user?.login || 'unknown'} · updated ${updated}`;
+        const parts = [`${item.user?.login || 'unknown'} · updated ${updated}`];
+        if (cardState.cfg.id === 'prs-with-dri') {
+          const token = state?.driToken || 'DRI:@';
+          const regex = new RegExp(`${escapeRegExp(token)}\\s*([^\\s]+)`, 'i');
+          const match = item.body ? item.body.match(regex) : null;
+          const dri = match?.[1] ? match[1] : 'not found';
+          parts.push(`DRI: ${dri}`);
+        }
+        meta.textContent = parts.join(' · ');
         li.append(a, meta);
         list.appendChild(li);
       });
@@ -825,7 +835,7 @@
         lastFetchAt = Date.now();
         const data = await fetchSearch(query, token);
         cardState.count.textContent = data.total_count?.toLocaleString?.() || data.total_count || '0';
-        renderItems(cardState, data.items || []);
+        renderItems(cardState, data.items || [], state);
       } catch (err) {
         cardState.count.textContent = '!';
         setListPlaceholder(cardState.list, err.message, 'error-text');
