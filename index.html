@@ -233,8 +233,7 @@
     .section-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
       margin-bottom: 12px;
     }
@@ -258,6 +257,7 @@
       flex-direction: column;
       gap: 8px;
       min-height: 230px;
+      position: relative;
     }
 
     .card[data-tone="warn"] {
@@ -272,6 +272,30 @@
       transform: translateY(-3px);
       border-color: rgba(77, 225, 211, 0.5);
       box-shadow: 0 18px 30px rgba(4, 8, 18, 0.55);
+    }
+
+    .card.is-loading {
+      border-color: rgba(77, 225, 211, 0.65);
+      box-shadow: 0 18px 30px rgba(4, 8, 18, 0.55);
+    }
+
+    .card.is-loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(120deg, transparent 0%, rgba(77, 225, 211, 0.08) 40%, rgba(77, 225, 211, 0.16) 50%, rgba(77, 225, 211, 0.08) 60%, transparent 100%);
+      animation: shimmer 1.2s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
     }
 
     .card-header {
@@ -315,7 +339,7 @@
       margin: 0;
       font-size: 17px;
       letter-spacing: -0.01em;
-      color: var(--text);
+      color: var(--accent);
     }
 
     .card p {
@@ -455,20 +479,32 @@
       <div class="section-header">
         <h2>Your pull requests</h2>
         <div class="actions">
-          <button id="load">Load</button>
-          <div id="status" class="status" aria-live="polite">Not loaded</div>
+          <button id="load-pulls">Load</button>
+          <div id="status-pulls" class="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
       <div class="grid" id="prs-grid"></div>
     </section>
 
     <section>
-      <h2>PR triaging</h2>
+      <div class="section-header">
+        <h2>PR triaging</h2>
+        <div class="actions">
+          <button id="load-triage">Load</button>
+          <div id="status-triage" class="status" aria-live="polite">Not loaded</div>
+        </div>
+      </div>
       <div class="grid" id="triage-grid"></div>
     </section>
 
     <section>
-      <h2>Issues</h2>
+      <div class="section-header">
+        <h2>Issues</h2>
+        <div class="actions">
+          <button id="load-issues">Load</button>
+          <div id="status-issues" class="status" aria-live="polite">Not loaded</div>
+        </div>
+      </div>
       <div class="grid" id="issues-grid"></div>
     </section>
   </div>
@@ -562,14 +598,22 @@
     const DEFAULTS = { repo: 'knex/knex', dri: 'DRI:@', handle: '@me', token: '' };
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
-    const STORAGE_KEY = 'knexRepoDashSettings';
+    const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}`;
 
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
     const handleInput = document.getElementById('handle');
     const tokenInput = document.getElementById('token');
-    const loadBtn = document.getElementById('load');
-    const statusEl = document.getElementById('status');
+    const loadButtons = {
+      pulls: document.getElementById('load-pulls'),
+      triage: document.getElementById('load-triage'),
+      issues: document.getElementById('load-issues')
+    };
+    const statusEls = {
+      pulls: document.getElementById('status-pulls'),
+      triage: document.getElementById('status-triage'),
+      issues: document.getElementById('status-issues')
+    };
     const grids = {
       issues: document.getElementById('issues-grid'),
       pulls: document.getElementById('prs-grid'),
@@ -646,9 +690,11 @@
       return { repo, driToken, handle, handleBare };
     }
 
-    function setStatus(text, state = '') {
-      statusEl.textContent = text;
-      statusEl.dataset.state = state;
+    function setStatus(section, text, state = '') {
+      const el = statusEls[section];
+      if (!el) return;
+      el.textContent = text;
+      el.dataset.state = state;
     }
 
     function buildQuery(cfg, state) {
@@ -666,6 +712,14 @@
       const path = cfg.section === 'issues' ? 'issues' : 'pulls';
       const repo = state.repo || DEFAULTS.repo;
       return `https://github.com/${repo}/${path}?q=${encodeURIComponent(buildQuery(cfg, state))}`;
+    }
+
+    function markSectionStale(section) {
+      setStatus(section, 'Not loaded', '');
+      cardsForSection(section).forEach((cardState) => {
+        cardState.count.textContent = '–';
+        setListPlaceholder(cardState.list, 'Not loaded yet.');
+      });
     }
 
     function makeCard(cfg) {
@@ -703,12 +757,12 @@
       reloadBtn.addEventListener('click', async () => {
         const state = getState();
         const token = tokenInput.value.trim();
-        setStatus(`Refreshing "${cfg.label}"…`);
+        setStatus(cfg.section, `Refreshing "${cfg.label}"…`);
         try {
           await refreshCard(cardState, state, token);
-          setStatus('Updated.', 'ok');
+          setStatus(cfg.section, 'Updated.', 'ok');
         } catch (err) {
-          setStatus(err.message, 'error');
+          setStatus(cfg.section, err.message, 'error');
         }
       });
     }
@@ -765,6 +819,7 @@
       const query = buildQuery(cardState.cfg, state);
       cardState.count.textContent = '…';
       setListPlaceholder(cardState.list, 'Loading…');
+      cardState.card.classList.add('is-loading');
       try {
         await rateLimit(token);
         lastFetchAt = Date.now();
@@ -775,32 +830,38 @@
         cardState.count.textContent = '!';
         setListPlaceholder(cardState.list, err.message, 'error-text');
         throw err;
+      } finally {
+        cardState.card.classList.remove('is-loading');
       }
     }
 
-    async function refreshAll() {
+    function cardsForSection(section) {
+      return Array.from(cards.values()).filter((c) => c.cfg.section === section);
+    }
+
+    async function refreshSection(section) {
+      const sectionCards = cardsForSection(section);
+      if (sectionCards.length === 0) return;
       const token = tokenInput.value.trim();
       const state = getState();
-      setStatus(`Refreshing ${cards.size} searches…`);
-      let errors = 0;
       const delay = token ? SEARCH_DELAY_MS : NO_TOKEN_DELAY_MS;
-      const states = Array.from(cards.values());
-      for (let i = 0; i < states.length; i += 1) {
-        const cardState = states[i];
+      setStatus(section, `Refreshing ${sectionCards.length} searches…`);
+      let errors = 0;
+      for (let i = 0; i < sectionCards.length; i += 1) {
+        const cardState = sectionCards[i];
         try {
           await refreshCard(cardState, state, token);
         } catch (err) {
           errors += 1;
         }
-        // stagger requests to respect search secondary rate limits
-        if (i < states.length - 1) {
+        if (i < sectionCards.length - 1) {
           await sleep(delay);
         }
       }
       if (errors > 0) {
-        setStatus(`Completed with ${errors} error(s).`, 'error');
+        setStatus(section, `Completed with ${errors} error(s).`, 'error');
       } else {
-        setStatus('Updated.', 'ok');
+        setStatus(section, 'Updated.', 'ok');
       }
     }
 
@@ -808,10 +869,12 @@
       loadSettings();
       config.forEach(makeCard);
       renderQueries();
+      Object.keys(loadButtons).forEach(markSectionStale);
 
       const persistAndRender = () => {
         saveSettings();
         renderQueries();
+        Object.keys(loadButtons).forEach(markSectionStale);
       };
 
       repoInput.addEventListener('input', persistAndRender);
@@ -822,7 +885,9 @@
       driInput.addEventListener('change', persistAndRender);
       handleInput.addEventListener('change', persistAndRender);
       tokenInput.addEventListener('change', persistAndRender);
-      loadBtn.addEventListener('click', refreshAll);
+      Object.entries(loadButtons).forEach(([section, btn]) => {
+        if (btn) btn.addEventListener('click', () => refreshSection(section));
+      });
     }
 
     init();
