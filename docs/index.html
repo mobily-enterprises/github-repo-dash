@@ -832,7 +832,15 @@
       const driToken = token || 'DRI:@';
       const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
       const match = item.body ? item.body.match(regex) : null;
-      return ensureAt(match?.[1]);
+      const handle = ensureAt(match?.[1]);
+      const coderRegex = new RegExp(`${escapeRegExp(driToken)}\\s*[^\\s]+\\s+coder`, 'i');
+      const role = coderRegex.test(item.body || '') ? 'code' : 'review';
+      return { handle, role };
+    }
+
+    function formatDri(dri) {
+      if (!dri || dri.handle === 'not found') return null;
+      return `DRI (${dri.role}): ${dri.handle}`;
     }
 
     function extractAssignee(item) {
@@ -927,7 +935,9 @@
       const lines = [];
 
       if (TOP_META_DRI_IDS.has(id)) {
-        lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
+        const dri = extractDri(item, state?.driToken);
+        const formatted = formatDri(dri);
+        if (formatted) lines.push(formatted);
       }
       if (TOP_META_ASSIGNEE_IDS.has(id)) {
         lines.push(`Assignee: ${extractAssignee(item)}`);
@@ -1048,9 +1058,9 @@
           if (assignee !== 'unassigned') {
             parts.unshift(`Assignee: ${assignee}`);
           }
-          const driBody = item.body ? extractDri(item, state?.driToken) : null;
-          if (driBody && driBody !== 'not found') {
-            parts.unshift(`DRI: ${driBody}`);
+          const driBody = item.body ? formatDri(extractDri(item, state?.driToken)) : null;
+          if (driBody) {
+            parts.unshift(driBody);
           }
         }
         meta.textContent = parts.join(' · ');
