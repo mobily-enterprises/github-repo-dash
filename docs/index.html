@@ -1061,14 +1061,9 @@
         const formatted = formatDri(dri, state?.handle);
         if (formatted) {
           let line = formatted;
-          if (dri && dri.role === 'code') {
-            const youHandle = (state?.handle || '').toLowerCase();
-            const driHandle = (dri.handle || '').toLowerCase();
-            const isYou = youHandle && driHandle && youHandle === driHandle;
-            const action = isYou ? 'pls check' : 'pls review';
+          if (dri) {
+            const action = dri.role === 'review' ? 'pls review' : 'pls code';
             line = `${formatted} (${action})`;
-          } else if (dri && dri.role === 'review') {
-            line = `${formatted} (pls code)`;
           }
           lines.push(line);
         }
