@@ -245,6 +245,11 @@
       gap: 14px;
     }
 
+    .priority-grid {
+      grid-template-columns: minmax(320px, 1fr);
+      margin-bottom: 8px;
+    }
+
     .card {
       background: var(--card);
       border-radius: 14px;
@@ -551,12 +556,13 @@
 
     <section>
       <div class="section-header">
-        <h2>PR triaging</h2>
+        <h2>PR assigning and triaging</h2>
         <div class="actions">
           <button id="load-triage">Load</button>
           <div id="status-triage" class="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
+      <div class="grid priority-grid" id="triage-priority-grid"></div>
       <div class="grid" id="triage-grid"></div>
     </section>
 
@@ -631,6 +637,16 @@
         query: 'is:pr is:open "__DRI_HANDLE__"'
       },
       {
+        id: 'prs-dri-waiting-assignee',
+        section: 'triage',
+        grid: 'triagePriority',
+        label: 'WAITING',
+        tone: 'warn',
+        title: 'PRs with DRI but no assignee',
+        desc: 'DRI declared in body but nobody is assigned. Assign the work.',
+        query: 'is:pr is:open "__DRI__" no:assignee'
+      },
+      {
         id: 'prs-no-dri',
         section: 'triage',
         label: 'Unowned',
@@ -648,15 +664,25 @@
         query: 'is:pr is:open "__DRI__"'
       },
       {
-        id: 'prs-dri-no-assignee',
+        id: 'prs-assignee-no-dri',
         section: 'triage',
-        label: 'Mismatch',
+        label: 'Needs DRI',
         tone: 'error',
         title: 'PRs with assignee but no DRI',
         desc: 'Assigned but missing a declared DRI. Likely an error.',
         query: 'is:pr is:open assignee:* in:body NOT "__DRI__"'
       }
     ];
+
+    const TOP_META_DRI_IDS = new Set(['prs-with-dri', 'prs-mine', 'prs-dri-waiting-assignee']);
+    const TOP_META_ASSIGNEE_IDS = new Set([
+      'prs-with-dri',
+      'prs-no-dri',
+      'prs-dri-me',
+      'prs-dri-waiting',
+      'prs-dri-waiting-assignee',
+      'prs-assignee-no-dri'
+    ]);
 
     const DEFAULTS = { repo: 'knex/knex', dri: 'DRI:@', handle: '@me', token: '' };
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
@@ -681,6 +707,7 @@
     const grids = {
       issues: document.getElementById('issues-grid'),
       pulls: document.getElementById('prs-grid'),
+      triagePriority: document.getElementById('triage-priority-grid'),
       triage: document.getElementById('triage-grid')
     };
 
@@ -898,22 +925,11 @@
     function addTopMetaLines(cardState, item, state, li) {
       const id = cardState.cfg.id;
       const lines = [];
-      if (id === 'prs-with-dri' || id === 'prs-dri-no-assignee') {
+
+      if (TOP_META_DRI_IDS.has(id)) {
         lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
       }
-      if (id === 'prs-mine') {
-        lines.push(`DRI: ${extractDri(item, state?.driToken)}`);
-      }
-      if (id === 'prs-with-dri') {
-        lines.push(`Assignee: ${extractAssignee(item)}`);
-      }
-      if (id === 'prs-no-dri') {
-        lines.push(`Assignee: ${extractAssignee(item)}`);
-      }
-      if (id === 'prs-dri-me') {
-        lines.push(`Assignee: ${extractAssignee(item)}`);
-      }
-      if (id === 'prs-dri-waiting') {
+      if (TOP_META_ASSIGNEE_IDS.has(id)) {
         lines.push(`Assignee: ${extractAssignee(item)}`);
       }
       lines.forEach((text) => {
@@ -962,7 +978,8 @@
 
       const cardState = { cfg, card, count, list, searchLink, hint, reloadBtn };
       cards.set(cfg.id, cardState);
-      grids[cfg.section].appendChild(card);
+      const targetGrid = grids[cfg.grid || cfg.section];
+      if (targetGrid) targetGrid.appendChild(card);
       reloadBtn.addEventListener('click', async () => {
         const state = getState();
         const token = tokenInput.value.trim();
