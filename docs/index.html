@@ -579,13 +579,16 @@
         <div class="pill-row">
           <span class="pill">Developer's Dashboard</span>
         </div>
-        <h1>Repository triage snapshot</h1>
+        <h1 id="repo-title">Repository triage snapshot</h1>
         <p>Live counts and recent items for the core searches. Adjust the repo or the DRI token if you want to reuse this
           for another project.</p>
       </div>
       <div class="controls">
         <div class="control-row">
-          <label>Your handle (with @)
+          <label>Repository
+            <input id="repo" type="text" placeholder="owner/repo" aria-label="Repository" />
+          </label>
+          <label>Your handle
             <input id="handle" type="text" value="@me" aria-label="Handle" />
           </label>
           <label title="Optional; kept in memory for this session">GitHub token (optional)
@@ -593,12 +596,9 @@
           </label>
         </div>
         <details class="advanced">
-          <summary>Advanced (repo &amp; DRI token)</summary>
+          <summary>Advanced (DRI token &amp; coder flags)</summary>
           <div class="advanced-grid">
-            <label>Repository
-              <input id="repo" type="text" value="knex/knex" aria-label="Repository" />
-            </label>
-            <label>DRI token in PR body or label
+            <label>DRI text in PR body/label
               <input id="dri" type="text" value="DRI:@" aria-label="DRI token" />
             </label>
             <label>Coder flag in body
@@ -757,7 +757,7 @@
 
     // Baseline defaults for inputs and flags. Query params can override and disable these.
     const DEFAULTS = {
-      repo: 'knex/knex',
+      repo: '',
       dri: 'DRI:@',
       handle: '@me',
       token: '',
@@ -772,6 +772,7 @@
     const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 
     // Inputs and static references
+    const repoTitle = document.getElementById('repo-title');
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
     const coderBodyInput = document.getElementById('coder-body-flag');
@@ -1308,6 +1309,12 @@
       });
     }
 
+    function renderTitle() {
+      if (!repoTitle) return;
+      const title = repoInput.value.trim();
+      repoTitle.textContent = title || 'Repository triage snapshot';
+    }
+
     // If cache fingerprint matches, hydrate cards from stored results.
     function hydrateCardsFromCache(state) {
       if (!cardCache?.fingerprint || cardCache.fingerprint !== makeFingerprint(state)) return;
@@ -1459,12 +1466,14 @@
       loadSettings();
       config.forEach(makeCard);
       renderQueries();
+      renderTitle();
       Object.keys(loadButtons).forEach(markSectionStale);
       hydrateCardsFromCache(getState());
 
       const persistAndRender = () => {
         saveSettings();
         renderQueries();
+        renderTitle();
         Object.keys(loadButtons).forEach(markSectionStale);
       };
 
