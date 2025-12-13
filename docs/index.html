@@ -265,7 +265,7 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 18px;
+      gap: 16px;
     }
 
     .priority-grid {
@@ -303,15 +303,11 @@
     .card::after {
       content: "";
       position: absolute;
-      left: 10px;
-      right: 10px;
-      top: -1px;
-      bottom: -1px;
-      background:
-        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent) top,
-        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent) bottom;
-      background-size: 100% 2px, 100% 2px;
-      background-repeat: no-repeat;
+      left: 8px;
+      right: 8px;
+      bottom: -2px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent 0%, rgba(77, 225, 211, 0.82) 35%, rgba(243, 101, 101, 0.82) 65%, transparent 100%);
       pointer-events: none;
     }
 
@@ -398,7 +394,7 @@
     }
 
     .card p {
-      margin: 0;
+      margin: 0 0 14px 0;
       color: #c0d0f0;
       line-height: 1.4;
       font-size: 14px;
@@ -410,7 +406,7 @@
       margin: 4px 0 2px 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 24px;
       flex: 1;
     }
 
@@ -418,7 +414,19 @@
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 10px;
-      padding: 8px 10px;
+      padding: 10px 12px;
+      position: relative;
+    }
+
+    .item-list li::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      top: -10px;
+      height: 5px;
+      background: linear-gradient(90deg, transparent, rgba(77, 225, 211, 0.7), rgba(243, 101, 101, 0.7), transparent);
+      pointer-events: none;
     }
 
     .item-list a {
@@ -672,15 +680,15 @@
         id: 'prs-dri-waiting',
         section: 'pulls',
         label: 'DRI waiting',
-        title: 'PRs where you are DRI and not assignee',
-        desc: 'You are DRI but not assigned, so waiting on others.',
+        title: 'PRs: you are DRI, not assignee',
+        desc: 'You are DRI, not assigned: waiting on others.',
         query: 'is:pr is:open "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
       },
       {
         id: 'prs-dri-me',
         section: 'pulls',
         label: 'DRI: You',
-        title: 'PRs where you are DRI',
+        title: 'PRs: you are DRI',
         desc: 'PR body lists you as DRI.',
         query: 'is:pr is:open "__DRI_HANDLE__"'
       },
