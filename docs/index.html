@@ -743,6 +743,7 @@
       }
     ];
 
+    // Which cards show extra DRI/assignee metadata in the list items.
     const TOP_META_DRI_IDS = new Set(['prs-with-dri', 'prs-mine', 'prs-dri-waiting-assignee', 'prs-dri-me', 'prs-dri-waiting']);
     const YOUR_ROLE_IDS = new Set(['prs-dri-me', 'prs-dri-waiting']);
     const TOP_META_ASSIGNEE_IDS = new Set([
@@ -754,6 +755,7 @@
       'prs-assignee-no-dri'
     ]);
 
+    // Baseline defaults for inputs and flags. Query params can override and disable these.
     const DEFAULTS = {
       repo: 'knex/knex',
       dri: 'DRI:@',
@@ -764,10 +766,12 @@
     };
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
+    // STORAGE_KEY ignores the query string so query overrides stay ephemeral; hash stays to scope per page.
     const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.hash}`;
     const NOTES_KEY = `${STORAGE_KEY}:notes`;
     const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 
+    // Inputs and static references
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
     const coderBodyInput = document.getElementById('coder-body-flag');
@@ -798,6 +802,7 @@
     let lastFetchAt = 0;
     let notesStore = {};
 
+    // Small helpers for DOM creation and timing.
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const createEl = (tag, className, textContent) => {
       const el = document.createElement(tag);
@@ -818,6 +823,7 @@
       return handle.startsWith('@') ? handle : `@${handle}`;
     };
 
+    // Throttle GitHub API calls to avoid secondary limits; slower when unauthenticated.
     async function rateLimit(token) {
       if (token) return;
       const now = Date.now();
@@ -827,12 +833,14 @@
       }
     }
 
+    // Normalizes handle input to always start with @.
     function normalizeHandle(raw) {
       const trimmed = (raw || '').trim();
       if (!trimmed) return DEFAULTS.handle;
       return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
     }
 
+    // Read query params that may override inputs (and lock them).
     function getQueryOverrides() {
       const params = new URLSearchParams(window.location.search);
       const hasRepo = params.has('repo');
@@ -864,6 +872,7 @@
       };
     }
 
+    // Load persisted settings, then apply any query overrides (which also disable those inputs).
     function loadSettings() {
       const overrides = queryOverrides;
       try {
@@ -925,6 +934,7 @@
       }
     }
 
+    // Persist current settings unless a field is locked by query override.
     function saveSettings() {
       const overrides = queryOverrides;
       let prev = {};
@@ -950,6 +960,7 @@
       persistNotes();
     }
 
+    // Snapshot current settings for use in queries and cache keys.
     function getState() {
       const repo = repoInput.value.trim() || DEFAULTS.repo;
       const driToken = driInput.value.trim() || DEFAULTS.dri;
@@ -971,6 +982,7 @@
       el.dataset.state = state;
     }
 
+    // Build GitHub search query from config template and current state.
     function buildQuery(cfg, state) {
       const query = cfg.query
         .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
@@ -982,12 +994,14 @@
       return query + repoClause;
     }
 
+    // Construct GitHub UI search URL for the "Open search" link.
     function buildSearchUrl(state, cfg) {
       const path = cfg.section === 'issues' ? 'issues' : 'pulls';
       const repo = state.repo || DEFAULTS.repo;
       return `https://github.com/${repo}/${path}?q=${encodeURIComponent(buildQuery(cfg, state))}`;
     }
 
+    // Extract DRI handle and coder/reviewer role from body and labels using configured flags.
     function extractDri(item, opts = {}) {
       const driToken = opts.driToken || DEFAULTS.dri;
       const coderBodyFlag = opts.coderBodyFlag || DEFAULTS.coderBodyFlag;
@@ -1018,6 +1032,9 @@
       }
 
       const handle = ensureAt(match?.[1]);
+      if (!match) {
+        return { handle, role: 'review' };
+      }
       const author = (item?.user?.login || '').toLowerCase();
       const handleBare = handle.replace(/^@+/, '').toLowerCase();
 
@@ -1035,7 +1052,6 @@
           coderFromLabel = item.labels.some((label) => {
             const name = label?.name || '';
             if (!name) return false;
-            if (!new RegExp(driTokenEsc, 'i').test(name)) return false;
             return new RegExp(escapeRegExp(coderLabelFlag), 'i').test(name);
           });
         }
@@ -1045,6 +1061,7 @@
       return { handle, role };
     }
 
+    // Present DRI with role label; replace your own handle with "you".
     function formatDri(dri, youHandle) {
       if (!dri || dri.handle === 'not found') return null;
       const roleLabel = dri.role === 'code' ? 'coder' : 'reviewer';
@@ -1054,6 +1071,7 @@
       return `DRI (${roleLabel}): ${prettyHandle}`;
     }
 
+    // Render assignee line with optional action hints when you are involved.
     function formatAssignee(item, dri, state, opts = {}) {
       const { includeActionForYou = false } = opts;
       const assignee = extractAssignee(item);
@@ -1088,11 +1106,13 @@
       return `Assignee: ${label}${suffix}${action ? ` (${action})` : ''}`;
     }
 
+    // Assignee helper: returns "@user" or "unassigned".
     function extractAssignee(item) {
       const assignees = item.assignees || [];
       return assignees[0]?.login ? ensureAt(assignees[0].login) : 'unassigned';
     }
 
+    // Notes persistence helpers (local-only).
     function noteKey(state, item) {
       return `${state.repo || DEFAULTS.repo}#${item.id}`;
     }
@@ -1175,6 +1195,7 @@
       li.appendChild(wrapper);
     }
 
+    // Adds DRI/assignee meta lines atop each list item based on card type.
     function addTopMetaLines(cardState, item, state, li) {
       const id = cardState.cfg.id;
       const lines = [];
@@ -1220,6 +1241,7 @@
       });
     }
 
+    // Reset a section to "not loaded" UI state.
     function markSectionStale(section) {
       setStatus(section, 'Not loaded', '');
       cardsForSection(section).forEach((cardState) => {
@@ -1228,6 +1250,7 @@
       });
     }
 
+    // Build the DOM for a single card and wire its reload handler.
     function makeCard(cfg) {
       const card = createEl('article', 'card');
       if (cfg.tone) card.dataset.tone = cfg.tone;
@@ -1274,6 +1297,7 @@
       });
     }
 
+    // Update search URLs and query hints whenever inputs change.
     function renderQueries() {
       const state = getState();
       cards.forEach(({ cfg, searchLink, hint }) => {
@@ -1283,6 +1307,7 @@
       });
     }
 
+    // If cache fingerprint matches, hydrate cards from stored results.
     function hydrateCardsFromCache(state) {
       if (!cardCache?.fingerprint || cardCache.fingerprint !== makeFingerprint(state)) return;
       const sectionHasCache = new Set();
@@ -1298,6 +1323,7 @@
       sectionHasCache.forEach((section) => setStatus(section, 'Loaded from cache'));
     }
 
+    // GitHub search API fetch wrapper with minimal error surfacing.
     async function fetchSearch(query, token) {
       const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=8&sort=updated&order=desc`;
       const headers = {
@@ -1316,6 +1342,7 @@
       return res.json();
     }
 
+    // Render list items for a card, with fallbacks for empty/error states.
     function renderItems(cardState, items, state) {
       const list = cardState.list;
       if (!items || items.length === 0) {
@@ -1365,6 +1392,7 @@
       });
     }
 
+    // Fetch and render a single card, updating cache on success.
     async function refreshCard(cardState, state, token) {
       const query = buildQuery(cardState.cfg, state);
       cardState.count.textContent = '…';
@@ -1393,10 +1421,12 @@
       }
     }
 
+    // Utility to group cards by section key.
     function cardsForSection(section) {
       return Array.from(cards.values()).filter((c) => c.cfg.section === section);
     }
 
+    // Sequentially refresh all cards in a section with throttling between calls.
     async function refreshSection(section) {
       const sectionCards = cardsForSection(section);
       if (sectionCards.length === 0) return;
@@ -1423,6 +1453,7 @@
       }
     }
 
+    // Bootstraps the UI, loads persisted settings, wires listeners, and hydrates from cache.
     function init() {
       loadSettings();
       config.forEach(makeCard);
