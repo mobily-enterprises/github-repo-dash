@@ -598,8 +598,14 @@
             <label>Repository
               <input id="repo" type="text" value="knex/knex" aria-label="Repository" />
             </label>
-            <label>DRI token in PR body
+            <label>DRI token in PR body or label
               <input id="dri" type="text" value="DRI:@" aria-label="DRI token" />
+            </label>
+            <label>Coder flag in body
+              <input id="coder-body-flag" type="text" value="coder" aria-label="Coder flag in body" />
+            </label>
+            <label>Coder flag in labels
+              <input id="coder-label-flag" type="text" value="DRI_is_coder" aria-label="Coder flag in labels" />
             </label>
           </div>
         </details>
@@ -748,15 +754,24 @@
       'prs-assignee-no-dri'
     ]);
 
-    const DEFAULTS = { repo: 'knex/knex', dri: 'DRI:@', handle: '@me', token: '' };
+    const DEFAULTS = {
+      repo: 'knex/knex',
+      dri: 'DRI:@',
+      handle: '@me',
+      token: '',
+      coderBodyFlag: 'coder',
+      coderLabelFlag: 'DRI_is_coder'
+    };
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
-    const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.hash}`;
     const NOTES_KEY = `${STORAGE_KEY}:notes`;
     const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
+    const coderBodyInput = document.getElementById('coder-body-flag');
+    const coderLabelInput = document.getElementById('coder-label-flag');
     const handleInput = document.getElementById('handle');
     const tokenInput = document.getElementById('token');
     const loadButtons = {
@@ -775,6 +790,7 @@
       triagePriority: document.getElementById('triage-priority-grid'),
       triage: document.getElementById('triage-grid')
     };
+    const queryOverrides = getQueryOverrides();
 
     const cards = new Map();
     const noteBindings = new Map();
@@ -822,21 +838,40 @@
       const hasRepo = params.has('repo');
       const hasDri = params.has('dri_token');
       const hasHandle = params.has('handle');
+      const hasCoderBodyFlag = params.has('coder_body_flag');
+      const hasCoderLabelFlag = params.has('coder_label_flag');
       const repoParam = hasRepo ? params.get('repo') : null;
       const driParam = hasDri ? params.get('dri_token') : null;
       const handleParam = hasHandle ? params.get('handle') : null;
+      const coderBodyParam = hasCoderBodyFlag ? params.get('coder_body_flag') : null;
+      const coderLabelParam = hasCoderLabelFlag ? params.get('coder_label_flag') : null;
       const repo = repoParam && repoParam.trim() ? repoParam.trim() : '';
       const dri = driParam && driParam.trim() ? driParam.trim() : '';
       const handle = handleParam && handleParam.trim() ? normalizeHandle(handleParam) : '';
-      return { repo, dri, handle, hasRepo, hasDri, hasHandle };
+      const coderBodyFlag = coderBodyParam && coderBodyParam.trim() ? coderBodyParam.trim() : '';
+      const coderLabelFlag = coderLabelParam && coderLabelParam.trim() ? coderLabelParam.trim() : '';
+      return {
+        repo,
+        dri,
+        handle,
+        coderBodyFlag,
+        coderLabelFlag,
+        hasRepo,
+        hasDri,
+        hasHandle,
+        hasCoderBodyFlag,
+        hasCoderLabelFlag
+      };
     }
 
     function loadSettings() {
-      const overrides = getQueryOverrides();
+      const overrides = queryOverrides;
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         if (saved.repo) repoInput.value = saved.repo;
         if (saved.dri) driInput.value = saved.dri;
+        if (saved.coderBodyFlag) coderBodyInput.value = saved.coderBodyFlag;
+        if (saved.coderLabelFlag) coderLabelInput.value = saved.coderLabelFlag;
         if (saved.handle) handleInput.value = normalizeHandle(saved.handle);
         if (saved.token) tokenInput.value = saved.token;
       } catch (_) {
@@ -844,13 +879,19 @@
       }
       if (overrides.repo) repoInput.value = overrides.repo;
       if (overrides.dri) driInput.value = overrides.dri;
+      if (overrides.coderBodyFlag) coderBodyInput.value = overrides.coderBodyFlag;
+      if (overrides.coderLabelFlag) coderLabelInput.value = overrides.coderLabelFlag;
       if (overrides.handle) handleInput.value = normalizeHandle(overrides.handle);
       if (!repoInput.value) repoInput.value = DEFAULTS.repo;
       if (!driInput.value) driInput.value = DEFAULTS.dri;
+      if (!coderBodyInput.value) coderBodyInput.value = DEFAULTS.coderBodyFlag;
+      if (!coderLabelInput.value) coderLabelInput.value = DEFAULTS.coderLabelFlag;
       if (!handleInput.value) handleInput.value = DEFAULTS.handle;
       if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
       repoInput.disabled = !!overrides.hasRepo;
       driInput.disabled = !!overrides.hasDri;
+      coderBodyInput.disabled = !!overrides.hasCoderBodyFlag;
+      coderLabelInput.disabled = !!overrides.hasCoderLabelFlag;
       handleInput.disabled = !!overrides.hasHandle;
 
       try {
@@ -885,15 +926,25 @@
     }
 
     function saveSettings() {
-      const data = {
-        repo: repoInput.value.trim(),
-        dri: driInput.value.trim(),
-        handle: normalizeHandle(handleInput.value),
-        token: tokenInput.value.trim()
-      };
+      const overrides = queryOverrides;
+      let prev = {};
+      try {
+        prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+      } catch (_) {
+        prev = {};
+      }
+      const data = { ...prev };
+      if (!overrides.hasRepo) data.repo = repoInput.value.trim() || DEFAULTS.repo;
+      if (!overrides.hasDri) data.dri = driInput.value.trim() || DEFAULTS.dri;
+      if (!overrides.hasCoderBodyFlag) data.coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
+      if (!overrides.hasCoderLabelFlag) data.coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
+      if (!overrides.hasHandle) data.handle = normalizeHandle(handleInput.value);
+      data.token = tokenInput.value.trim();
       repoInput.value = data.repo || DEFAULTS.repo;
       driInput.value = data.dri || DEFAULTS.dri;
-      handleInput.value = data.handle;
+      coderBodyInput.value = data.coderBodyFlag || DEFAULTS.coderBodyFlag;
+      coderLabelInput.value = data.coderLabelFlag || DEFAULTS.coderLabelFlag;
+      handleInput.value = data.handle || DEFAULTS.handle;
       tokenInput.value = data.token;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       persistNotes();
@@ -904,11 +955,13 @@
       const driToken = driInput.value.trim() || DEFAULTS.dri;
       const handle = normalizeHandle(handleInput.value);
       const handleBare = handle.replace(/^@+/, '');
-      return { repo, driToken, handle, handleBare };
+      const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
+      const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
+      return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag };
     }
 
     function makeFingerprint(state) {
-      return `${STORAGE_KEY}::${state.repo}::${state.driToken}::${state.handle}`;
+      return `${STORAGE_KEY}::${state.repo}::${state.driToken}::${state.handle}::${state.coderBodyFlag}::${state.coderLabelFlag}`;
     }
 
     function setStatus(section, text, state = '') {
@@ -935,31 +988,60 @@
       return `https://github.com/${repo}/${path}?q=${encodeURIComponent(buildQuery(cfg, state))}`;
     }
 
-    function extractDri(item, token) {
-      const driToken = token || 'DRI:@';
+    function extractDri(item, opts = {}) {
+      const driToken = opts.driToken || DEFAULTS.dri;
+      const coderBodyFlag = opts.coderBodyFlag || DEFAULTS.coderBodyFlag;
+      const coderLabelFlag = opts.coderLabelFlag || DEFAULTS.coderLabelFlag;
       const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
-      const sources = [];
-      if (item?.body) sources.push(item.body);
-      if (Array.isArray(item?.labels)) {
-        item.labels.forEach((label) => {
-          if (label?.name) sources.push(label.name);
-        });
-      }
+
+      let match = null;
       let matchedSource = '';
-      const match = sources.reduce((acc, src) => {
-        if (acc || !src) return acc;
-        const m = src.match(regex);
-        if (m) {
-          matchedSource = src;
-          return m;
+
+      if (item?.body) {
+        const bodyMatch = item.body.match(regex);
+        if (bodyMatch) {
+          match = bodyMatch;
+          matchedSource = item.body;
         }
-        return acc;
-      }, null);
+      }
+
+      if (!match && Array.isArray(item?.labels)) {
+        for (const label of item.labels) {
+          if (!label?.name) continue;
+          const labelMatch = label.name.match(regex);
+          if (labelMatch) {
+            match = labelMatch;
+            matchedSource = label.name;
+            break;
+          }
+        }
+      }
+
       const handle = ensureAt(match?.[1]);
-      const coderRegex = new RegExp(`${escapeRegExp(driToken)}\\s*[^\\s]+\\s+coder`, 'i');
       const author = (item?.user?.login || '').toLowerCase();
       const handleBare = handle.replace(/^@+/, '').toLowerCase();
-      const role = coderRegex.test(matchedSource || item.body || '') || (author && handleBare && author === handleBare) ? 'code' : 'review';
+
+      let role = 'review';
+      if (handle !== 'not found') {
+        const driTokenEsc = escapeRegExp(driToken);
+        const handleBareEsc = escapeRegExp(handleBare);
+        const coderFromAuthor = author && handleBare && author === handleBare;
+        const coderFromBody =
+          coderBodyFlag &&
+          item?.body &&
+          new RegExp(`${driTokenEsc}\\s*@?${handleBareEsc}\\s+${escapeRegExp(coderBodyFlag)}`, 'i').test(item.body);
+        let coderFromLabel = false;
+        if (coderLabelFlag && Array.isArray(item?.labels)) {
+          coderFromLabel = item.labels.some((label) => {
+            const name = label?.name || '';
+            if (!name) return false;
+            if (!new RegExp(driTokenEsc, 'i').test(name)) return false;
+            return new RegExp(escapeRegExp(coderLabelFlag), 'i').test(name);
+          });
+        }
+        if (coderFromAuthor || coderFromBody || coderFromLabel) role = 'code';
+      }
+
       return { handle, role };
     }
 
@@ -1098,7 +1180,11 @@
       const lines = [];
       const dri =
         id === 'prs-mine' || YOUR_ROLE_IDS.has(id) || TOP_META_DRI_IDS.has(id)
-          ? extractDri(item, state?.driToken)
+          ? extractDri(item, {
+              driToken: state?.driToken,
+              coderBodyFlag: state?.coderBodyFlag,
+              coderLabelFlag: state?.coderLabelFlag
+            })
           : null;
 
       if (id === 'prs-mine') {
@@ -1258,7 +1344,16 @@
           if (assignee !== 'unassigned') {
             parts.unshift(`Assignee: ${assignee}`);
           }
-          const driBody = item.body ? formatDri(extractDri(item, state?.driToken), state?.handle) : null;
+          const driBody = item.body
+            ? formatDri(
+                extractDri(item, {
+                  driToken: state?.driToken,
+                  coderBodyFlag: state?.coderBodyFlag,
+                  coderLabelFlag: state?.coderLabelFlag
+                }),
+                state?.handle
+              )
+            : null;
           if (driBody) {
             parts.unshift(driBody);
           }
@@ -1343,10 +1438,14 @@
 
       repoInput.addEventListener('input', persistAndRender);
       driInput.addEventListener('input', persistAndRender);
+      coderBodyInput.addEventListener('input', persistAndRender);
+      coderLabelInput.addEventListener('input', persistAndRender);
       handleInput.addEventListener('input', persistAndRender);
       tokenInput.addEventListener('input', persistAndRender);
       repoInput.addEventListener('change', persistAndRender);
       driInput.addEventListener('change', persistAndRender);
+      coderBodyInput.addEventListener('change', persistAndRender);
+      coderLabelInput.addEventListener('change', persistAndRender);
       handleInput.addEventListener('change', persistAndRender);
       tokenInput.addEventListener('change', persistAndRender);
       Object.entries(loadButtons).forEach(([section, btn]) => {
