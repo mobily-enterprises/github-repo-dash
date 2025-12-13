@@ -841,10 +841,47 @@
       return { handle, role };
     }
 
-    function formatDri(dri) {
+    function formatDri(dri, youHandle) {
       if (!dri || dri.handle === 'not found') return null;
       const roleLabel = dri.role === 'code' ? 'coder' : 'reviewer';
-      return `DRI (${roleLabel}): ${dri.handle}`;
+      const prettyHandle = youHandle && dri.handle.toLowerCase() === youHandle.toLowerCase()
+        ? 'you'
+        : dri.handle;
+      return `DRI (${roleLabel}): ${prettyHandle}`;
+    }
+
+    function formatAssignee(item, dri, state, opts = {}) {
+      const { includeActionForYou = false } = opts;
+      const assignee = extractAssignee(item);
+      if (assignee === 'unassigned') return 'Assignee: unassigned';
+
+      const assigneeBare = assignee.replace(/^@+/, '').toLowerCase();
+      const author = (item?.user?.login || '').toLowerCase();
+      const driHandle = (dri?.handle || '').replace(/^@+/, '').toLowerCase();
+      const driRole = dri?.role;
+
+      let suffix = '';
+      if (driHandle && driRole === 'code') {
+        if (assigneeBare && assigneeBare !== driHandle) {
+          suffix = ' (reviewing)';
+        }
+      } else if (driHandle && driRole === 'review') {
+        if (assigneeBare && assigneeBare === author && author && author !== driHandle) {
+          suffix = ' (coding)';
+        }
+      }
+
+      const youHandle = (state?.handle || '').toLowerCase();
+      const isYou = youHandle && assignee.toLowerCase() === youHandle;
+      const label = isYou ? 'you' : assignee;
+
+      let action = '';
+      if (includeActionForYou && isYou) {
+        if (driRole === 'code') action = 'pls check';
+        else if (driRole === 'review') action = 'pls code';
+      }
+
+      return `Assignee: ${label}${suffix}${action ? ` (${action})` : ''}`;
     }
 
     function extractAssignee(item) {
@@ -937,18 +974,36 @@
     function addTopMetaLines(cardState, item, state, li) {
       const id = cardState.cfg.id;
       const lines = [];
+      const dri =
+        id === 'prs-mine' || YOUR_ROLE_IDS.has(id) || TOP_META_DRI_IDS.has(id)
+          ? extractDri(item, state?.driToken)
+          : null;
 
-      if (YOUR_ROLE_IDS.has(id)) {
-        const dri = extractDri(item, state?.driToken);
+      if (id === 'prs-mine') {
+        const formatted = formatDri(dri, state?.handle);
+        if (formatted) {
+          let line = formatted;
+          if (dri && dri.role === 'code') {
+            const youHandle = (state?.handle || '').toLowerCase();
+            const driHandle = (dri.handle || '').toLowerCase();
+            const isYou = youHandle && driHandle && youHandle === driHandle;
+            const action = isYou ? 'pls check' : 'pls review';
+            line = `${formatted} (${action})`;
+          } else if (dri && dri.role === 'review') {
+            line = `${formatted} (pls code)`;
+          }
+          lines.push(line);
+        }
+      } else if (YOUR_ROLE_IDS.has(id)) {
         const roleLabel = dri?.role === 'code' ? 'coder' : 'reviewer';
         lines.push(`Your role: ${roleLabel}`);
       } else if (TOP_META_DRI_IDS.has(id)) {
-        const dri = extractDri(item, state?.driToken);
-        const formatted = formatDri(dri);
+        const formatted = formatDri(dri, state?.handle);
         if (formatted) lines.push(formatted);
       }
       if (TOP_META_ASSIGNEE_IDS.has(id)) {
-        lines.push(`Assignee: ${extractAssignee(item)}`);
+        const includeActionForYou = YOUR_ROLE_IDS.has(id);
+        lines.push(formatAssignee(item, dri, state, { includeActionForYou }));
       }
       lines.forEach((text) => {
         const line = createEl('div', 'meta', text);
@@ -1066,7 +1121,7 @@
           if (assignee !== 'unassigned') {
             parts.unshift(`Assignee: ${assignee}`);
           }
-          const driBody = item.body ? formatDri(extractDri(item, state?.driToken)) : null;
+          const driBody = item.body ? formatDri(extractDri(item, state?.driToken), state?.handle) : null;
           if (driBody) {
             parts.unshift(driBody);
           }
