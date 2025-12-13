@@ -674,7 +674,8 @@
       }
     ];
 
-    const TOP_META_DRI_IDS = new Set(['prs-with-dri', 'prs-mine', 'prs-dri-waiting-assignee']);
+    const TOP_META_DRI_IDS = new Set(['prs-with-dri', 'prs-mine', 'prs-dri-waiting-assignee', 'prs-dri-me', 'prs-dri-waiting']);
+    const YOUR_ROLE_IDS = new Set(['prs-dri-me', 'prs-dri-waiting']);
     const TOP_META_ASSIGNEE_IDS = new Set([
       'prs-with-dri',
       'prs-no-dri',
@@ -842,7 +843,8 @@
 
     function formatDri(dri) {
       if (!dri || dri.handle === 'not found') return null;
-      return `DRI (${dri.role}): ${dri.handle}`;
+      const roleLabel = dri.role === 'code' ? 'coder' : 'reviewer';
+      return `DRI (${roleLabel}): ${dri.handle}`;
     }
 
     function extractAssignee(item) {
@@ -936,7 +938,11 @@
       const id = cardState.cfg.id;
       const lines = [];
 
-      if (TOP_META_DRI_IDS.has(id)) {
+      if (YOUR_ROLE_IDS.has(id)) {
+        const dri = extractDri(item, state?.driToken);
+        const roleLabel = dri?.role === 'code' ? 'coder' : 'reviewer';
+        lines.push(`Your role: ${roleLabel}`);
+      } else if (TOP_META_DRI_IDS.has(id)) {
         const dri = extractDri(item, state?.driToken);
         const formatted = formatDri(dri);
         if (formatted) lines.push(formatted);
