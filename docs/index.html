@@ -169,6 +169,13 @@
       box-shadow: 0 0 0 3px rgba(77, 225, 211, 0.18);
     }
 
+    input:not([type="checkbox"]):disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+      border-color: rgba(255, 255, 255, 0.04);
+    }
+
     .pill-row {
       display: flex;
       gap: 8px;
@@ -810,7 +817,22 @@
       return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
     }
 
+    function getQueryOverrides() {
+      const params = new URLSearchParams(window.location.search);
+      const hasRepo = params.has('repo');
+      const hasDri = params.has('dri_token');
+      const hasHandle = params.has('handle');
+      const repoParam = hasRepo ? params.get('repo') : null;
+      const driParam = hasDri ? params.get('dri_token') : null;
+      const handleParam = hasHandle ? params.get('handle') : null;
+      const repo = repoParam && repoParam.trim() ? repoParam.trim() : '';
+      const dri = driParam && driParam.trim() ? driParam.trim() : '';
+      const handle = handleParam && handleParam.trim() ? normalizeHandle(handleParam) : '';
+      return { repo, dri, handle, hasRepo, hasDri, hasHandle };
+    }
+
     function loadSettings() {
+      const overrides = getQueryOverrides();
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         if (saved.repo) repoInput.value = saved.repo;
@@ -820,10 +842,16 @@
       } catch (_) {
         // ignore malformed storage
       }
+      if (overrides.repo) repoInput.value = overrides.repo;
+      if (overrides.dri) driInput.value = overrides.dri;
+      if (overrides.handle) handleInput.value = normalizeHandle(overrides.handle);
       if (!repoInput.value) repoInput.value = DEFAULTS.repo;
       if (!driInput.value) driInput.value = DEFAULTS.dri;
       if (!handleInput.value) handleInput.value = DEFAULTS.handle;
       if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
+      repoInput.disabled = !!overrides.hasRepo;
+      driInput.disabled = !!overrides.hasDri;
+      handleInput.disabled = !!overrides.hasHandle;
 
       try {
         notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
