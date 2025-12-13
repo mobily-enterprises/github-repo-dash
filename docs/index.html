@@ -938,12 +938,28 @@
     function extractDri(item, token) {
       const driToken = token || 'DRI:@';
       const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
-      const match = item.body ? item.body.match(regex) : null;
+      const sources = [];
+      if (item?.body) sources.push(item.body);
+      if (Array.isArray(item?.labels)) {
+        item.labels.forEach((label) => {
+          if (label?.name) sources.push(label.name);
+        });
+      }
+      let matchedSource = '';
+      const match = sources.reduce((acc, src) => {
+        if (acc || !src) return acc;
+        const m = src.match(regex);
+        if (m) {
+          matchedSource = src;
+          return m;
+        }
+        return acc;
+      }, null);
       const handle = ensureAt(match?.[1]);
       const coderRegex = new RegExp(`${escapeRegExp(driToken)}\\s*[^\\s]+\\s+coder`, 'i');
       const author = (item?.user?.login || '').toLowerCase();
       const handleBare = handle.replace(/^@+/, '').toLowerCase();
-      const role = coderRegex.test(item.body || '') || (author && handleBare && author === handleBare) ? 'code' : 'review';
+      const role = coderRegex.test(matchedSource || item.body || '') || (author && handleBare && author === handleBare) ? 'code' : 'review';
       return { handle, role };
     }
 
