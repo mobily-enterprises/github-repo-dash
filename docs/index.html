@@ -834,7 +834,9 @@
       const match = item.body ? item.body.match(regex) : null;
       const handle = ensureAt(match?.[1]);
       const coderRegex = new RegExp(`${escapeRegExp(driToken)}\\s*[^\\s]+\\s+coder`, 'i');
-      const role = coderRegex.test(item.body || '') ? 'code' : 'review';
+      const author = (item?.user?.login || '').toLowerCase();
+      const handleBare = handle.replace(/^@+/, '').toLowerCase();
+      const role = coderRegex.test(item.body || '') || (author && handleBare && author === handleBare) ? 'code' : 'review';
       return { handle, role };
     }
 
