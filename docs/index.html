@@ -44,11 +44,16 @@
 
     header {
       margin-bottom: 24px;
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      header {
+        grid-template-columns: 1fr;
+      }
     }
 
     .title {
@@ -73,13 +78,31 @@
     .controls {
       background: var(--panel);
       border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-radius: 12px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-direction: column;
       flex-wrap: wrap;
       box-shadow: var(--shadow);
+      align-self: stretch;
+    }
+
+    .controls .control-row {
+      align-items: flex-start;
+    }
+
+    .controls .control-row label {
+      flex: 1;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .controls .control-row input:not([type="checkbox"]) {
+      min-width: 0;
+      width: 100%;
     }
 
     .control-row {
@@ -242,12 +265,13 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 14px;
+      gap: 18px;
     }
 
     .priority-grid {
       grid-template-columns: minmax(320px, 1fr);
-      margin-bottom: 8px;
+      gap: 18px;
+      margin-bottom: 12px;
     }
 
     .card {
@@ -256,14 +280,39 @@
       padding: 16px 16px 14px 16px;
       color: inherit;
       text-decoration: none;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: var(--shadow), 0 0 0 1px rgba(255, 255, 255, 0.05);
       transition: transform 0.15s ease, border 0.15s ease, box-shadow 0.15s ease;
       display: flex;
       flex-direction: column;
       gap: 8px;
       min-height: 230px;
       position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: -1px;
+      bottom: -1px;
+      background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent) top,
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent) bottom;
+      background-size: 100% 2px, 100% 2px;
+      background-repeat: no-repeat;
+      pointer-events: none;
     }
 
     .card[data-tone="warn"] {
@@ -513,8 +562,7 @@
     <header>
       <div class="title">
         <div class="pill-row">
-          <span class="pill">Developer's</span>
-          <span class="pill">Dashboard</span>
+          <span class="pill">Developer's Dashboard</span>
         </div>
         <h1>Repository triage snapshot</h1>
         <p>Live counts and recent items for the core searches. Adjust the repo or the DRI token if you want to reuse this
@@ -525,7 +573,7 @@
           <label>Your handle (with @)
             <input id="handle" type="text" value="@me" aria-label="Handle" />
           </label>
-          <label>GitHub token (optional, kept in memory)
+          <label title="Optional; kept in memory for this session">GitHub token (optional)
             <input id="token" type="password" placeholder="ghp_xxx" aria-label="GitHub token" />
           </label>
         </div>
