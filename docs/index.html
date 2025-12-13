@@ -738,6 +738,7 @@
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
     const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`;
     const NOTES_KEY = `${STORAGE_KEY}:notes`;
+    const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
@@ -762,6 +763,7 @@
 
     const cards = new Map();
     const noteBindings = new Map();
+    let cardCache = { fingerprint: '', cards: {} };
     let lastFetchAt = 0;
     let notesStore = {};
 
@@ -820,11 +822,27 @@
       } catch (_) {
         notesStore = {};
       }
+      try {
+        const cache = JSON.parse(localStorage.getItem(CARDS_CACHE_KEY) || '{}');
+        if (cache && typeof cache === 'object') {
+          cardCache = cache;
+        }
+      } catch (_) {
+        cardCache = { fingerprint: '', cards: {} };
+      }
     }
 
     function persistNotes() {
       try {
         localStorage.setItem(NOTES_KEY, JSON.stringify(notesStore));
+      } catch (_) {
+        // ignore storage errors
+      }
+    }
+
+    function persistCardCache() {
+      try {
+        localStorage.setItem(CARDS_CACHE_KEY, JSON.stringify(cardCache));
       } catch (_) {
         // ignore storage errors
       }
@@ -851,6 +869,10 @@
       const handle = normalizeHandle(handleInput.value);
       const handleBare = handle.replace(/^@+/, '');
       return { repo, driToken, handle, handleBare };
+    }
+
+    function makeFingerprint(state) {
+      return `${STORAGE_KEY}::${state.repo}::${state.driToken}::${state.handle}`;
     }
 
     function setStatus(section, text, state = '') {
@@ -1123,6 +1145,21 @@
       });
     }
 
+    function hydrateCardsFromCache(state) {
+      if (!cardCache?.fingerprint || cardCache.fingerprint !== makeFingerprint(state)) return;
+      const sectionHasCache = new Set();
+      Object.entries(cardCache.cards || {}).forEach(([id, payload]) => {
+        const cardState = cards.get(id);
+        if (!cardState) return;
+        const items = payload?.items || [];
+        const count = payload?.total_count;
+        cardState.count.textContent = count?.toLocaleString?.() || count || '0';
+        renderItems(cardState, items, state);
+        sectionHasCache.add(cardState.cfg.section);
+      });
+      sectionHasCache.forEach((section) => setStatus(section, 'Loaded from cache'));
+    }
+
     async function fetchSearch(query, token) {
       const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=8&sort=updated&order=desc`;
       const headers = {
@@ -1192,6 +1229,14 @@
         const data = await fetchSearch(query, token);
         cardState.count.textContent = data.total_count?.toLocaleString?.() || data.total_count || '0';
         renderItems(cardState, data.items || [], state);
+        cardCache = cardCache || { fingerprint: '', cards: {} };
+        cardCache.fingerprint = makeFingerprint(state);
+        cardCache.cards = cardCache.cards || {};
+        cardCache.cards[cardState.cfg.id] = {
+          items: data.items || [],
+          total_count: data.total_count
+        };
+        persistCardCache();
       } catch (err) {
         cardState.count.textContent = '!';
         setListPlaceholder(cardState.list, err.message, 'error-text');
@@ -1236,6 +1281,7 @@
       config.forEach(makeCard);
       renderQueries();
       Object.keys(loadButtons).forEach(markSectionStale);
+      hydrateCardsFromCache(getState());
 
       const persistAndRender = () => {
         saveSettings();
