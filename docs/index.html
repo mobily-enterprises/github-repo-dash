@@ -955,8 +955,8 @@
 
       let action = '';
       if (includeActionForYou && isYou) {
-        if (driRole === 'code') action = 'pls check';
-        else if (driRole === 'review') action = 'pls code';
+        if (driRole === 'code') action = 'pls code';
+        else if (driRole === 'review') action = 'pls review';
       }
 
       return `Assignee: ${label}${suffix}${action ? ` (${action})` : ''}`;
@@ -1062,7 +1062,12 @@
         if (formatted) {
           let line = formatted;
           if (dri) {
-            const action = dri.role === 'review' ? 'pls review' : 'pls code';
+            const youHandle = (state?.handle || '').toLowerCase();
+            const driHandle = (dri.handle || '').toLowerCase();
+            const isYou = youHandle && driHandle && youHandle === driHandle;
+            let action = '';
+            if (dri.role === 'code') action = isYou ? 'pls code' : 'pls review';
+            else if (dri.role === 'review') action = isYou ? 'pls review' : 'pls code';
             line = `${formatted} (${action})`;
           }
           lines.push(line);
