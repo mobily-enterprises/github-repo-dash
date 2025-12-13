@@ -146,7 +146,7 @@
 
     label {
       display: flex;
-      flex-direction: column;
+      /* flex-direction: column; */
       gap: 4px;
       font-size: 13px;
       color: var(--muted);
@@ -156,7 +156,7 @@
       background: var(--card);
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text);
-      padding: 10px 12px;
+      /* padding: 10px 12px; */
       border-radius: 8px;
       min-width: 200px;
       font-size: 14px;
@@ -510,17 +510,16 @@
     }
 
     .note {
-      margin-top: 6px;
+      margin-top: 4px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
 
     .note-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
+      display: flex;
       align-items: center;
-      column-gap: 6px;
+      gap: 6px;
     }
 
     .note-input {
@@ -529,8 +528,8 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: rgba(255, 255, 255, 0.02);
       color: var(--text);
-      padding: 7px 8px;
-      font-size: 13px;
+      padding: 3px 4px;
+      font-size: 12px;
       outline: none;
       transition: border 0.15s ease, box-shadow 0.15s ease;
       min-width: 0;
@@ -553,6 +552,7 @@
       cursor: pointer;
       user-select: none;
       white-space: nowrap;
+      line-height: 1;
     }
 
     .note .tag-toggle input {
@@ -1175,7 +1175,8 @@
       const toggle = createEl('label', 'tag-toggle');
       const toggleInput = createEl('input');
       toggleInput.type = 'checkbox';
-      toggle.append(toggleInput, createEl('span', null, 'Red'));
+      toggle.title = 'Mark important';
+      toggle.append(toggleInput, createEl('span', null, '!'));
 
       const binding = { input, toggle: toggleInput, wrapper };
       applyNoteState(binding, entry);
