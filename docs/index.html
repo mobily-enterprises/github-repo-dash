@@ -708,7 +708,7 @@
         label: 'Unowned',
         tone: 'warn',
         title: 'Open PRs with no DRI',
-        desc: 'PR body does not declare a DRI. Completely unowned.',
+        desc: 'PR body does not declare a DRI. Unowned.',
         query: 'is:pr is:open in:body NOT "__DRI__"'
       },
       {
@@ -725,7 +725,7 @@
         label: 'Needs DRI',
         tone: 'error',
         title: 'PRs with assignee but no DRI',
-        desc: 'Assigned but missing a declared DRI. Likely an error.',
+        desc: 'Assigned but missing a DRI. Likely erroneous.',
         query: 'is:pr is:open assignee:* in:body NOT "__DRI__"'
       }
     ];
