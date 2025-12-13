@@ -129,7 +129,7 @@
       color: var(--muted);
     }
 
-    input {
+    input:not([type="checkbox"]) {
       background: var(--card);
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text);
@@ -141,7 +141,7 @@
       transition: border 0.15s ease, box-shadow 0.15s ease;
     }
 
-    input:focus {
+    input:not([type="checkbox"]):focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(77, 225, 211, 0.18);
     }
@@ -422,7 +422,7 @@
         align-items: flex-start;
       }
 
-      input {
+      input:not([type="checkbox"]) {
         min-width: 100%;
       }
 
@@ -438,6 +438,68 @@
       .query-hint {
         text-align: left;
       }
+    }
+
+    .note {
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .note-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      column-gap: 6px;
+    }
+
+    .note-input {
+      flex: 1;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text);
+      padding: 7px 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+      min-width: 0;
+    }
+
+    .note-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(77, 225, 211, 0.2);
+    }
+
+    .note .tag-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .note .tag-toggle input {
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--error);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+    }
+
+    .note.is-red input {
+      border-color: rgba(243, 101, 101, 0.6);
+      box-shadow: 0 0 0 2px rgba(243, 101, 101, 0.2);
+      color: #ffe6e6;
     }
   </style>
 </head>
@@ -600,6 +662,7 @@
     const SEARCH_DELAY_MS = 5000; // throttle between search calls to avoid secondary limits (authenticated)
     const NO_TOKEN_DELAY_MS = 10000; // throttle harder when unauthenticated
     const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const NOTES_KEY = `${STORAGE_KEY}:notes`;
 
     const repoInput = document.getElementById('repo');
     const driInput = document.getElementById('dri');
@@ -623,6 +686,7 @@
 
     const cards = new Map();
     let lastFetchAt = 0;
+    let notesStore = {};
 
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     const createEl = (tag, className, textContent) => {
@@ -673,6 +737,12 @@
       if (!driInput.value) driInput.value = DEFAULTS.dri;
       if (!handleInput.value) handleInput.value = DEFAULTS.handle;
       if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
+
+      try {
+        notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+      } catch (_) {
+        notesStore = {};
+      }
     }
 
     function saveSettings() {
@@ -687,6 +757,7 @@
       handleInput.value = data.handle;
       tokenInput.value = data.token;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notesStore));
     }
 
     function getState() {
@@ -731,6 +802,47 @@
     function extractAssignee(item) {
       const assignees = item.assignees || [];
       return assignees[0]?.login ? ensureAt(assignees[0].login) : 'unassigned';
+    }
+
+    function noteKey(state, item) {
+      return `${state.repo || DEFAULTS.repo}#${item.id}`;
+    }
+
+    function renderNote(li, state, item) {
+      const key = noteKey(state, item);
+      const entry = notesStore[key] || {};
+      const wrapper = createEl('div', 'note');
+      if (entry.isRed) wrapper.classList.add('is-red');
+
+      const row = createEl('div', 'note-row');
+      const input = createEl('input', 'note-input');
+      input.type = 'text';
+      input.maxLength = 120;
+      input.placeholder = 'Short note (saved locally)';
+      input.value = entry.text || '';
+
+      const toggle = createEl('label', 'tag-toggle');
+      const toggleInput = createEl('input');
+      toggleInput.type = 'checkbox';
+      toggleInput.checked = !!entry.isRed;
+      toggle.append(toggleInput, createEl('span', null, 'Red'));
+
+      const persist = () => {
+        notesStore[key] = { text: input.value, isRed: toggleInput.checked };
+        try {
+          localStorage.setItem(NOTES_KEY, JSON.stringify(notesStore));
+        } catch (_) {
+          // ignore storage errors
+        }
+        wrapper.classList.toggle('is-red', toggleInput.checked);
+      };
+
+      input.addEventListener('input', persist);
+      toggleInput.addEventListener('change', persist);
+
+      row.append(input, toggle);
+      wrapper.append(row);
+      li.appendChild(wrapper);
     }
 
     function addTopMetaLines(cardState, item, state, li) {
@@ -857,24 +969,25 @@
         a.target = '_blank';
         a.rel = 'noopener';
         const meta = createEl('div', 'meta');
-      const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
-      const parts = [`${item.user?.login || 'unknown'} · updated ${updated}`];
-      if (cardState.cfg.id === 'issues-assigned') {
-        parts.unshift(`Assignee: ${extractAssignee(item)}`);
-      }
-      if (cardState.cfg.id === 'issues-unlabeled') {
-        const assignee = extractAssignee(item);
-        if (assignee !== 'unassigned') {
-          parts.unshift(`Assignee: ${assignee}`);
+        const updated = item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '';
+        const parts = [`${item.user?.login || 'unknown'} · updated ${updated}`];
+        if (cardState.cfg.id === 'issues-assigned') {
+          parts.unshift(`Assignee: ${extractAssignee(item)}`);
         }
-        const driBody = item.body ? extractDri(item, state?.driToken) : null;
-        if (driBody && driBody !== 'not found') {
-          parts.unshift(`DRI: ${driBody}`);
+        if (cardState.cfg.id === 'issues-unlabeled') {
+          const assignee = extractAssignee(item);
+          if (assignee !== 'unassigned') {
+            parts.unshift(`Assignee: ${assignee}`);
+          }
+          const driBody = item.body ? extractDri(item, state?.driToken) : null;
+          if (driBody && driBody !== 'not found') {
+            parts.unshift(`DRI: ${driBody}`);
+          }
         }
-      }
-      meta.textContent = parts.join(' · ');
-      li.append(a, meta);
-      list.appendChild(li);
+        meta.textContent = parts.join(' · ');
+        li.append(a, meta);
+        renderNote(li, state, item);
+        list.appendChild(li);
       });
     }
 
