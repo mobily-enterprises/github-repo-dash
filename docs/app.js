@@ -177,7 +177,10 @@ function makeCard(cfg) {
   const hint = createEl('div', 'query-hint');
   footer.append(searchLink, hint);
 
-  card.append(header, h3, desc, list, footer);
+  const loadingBadge = createEl('div', 'loading-badge', 'Loading…');
+  loadingBadge.setAttribute('aria-hidden', 'true');
+
+  card.append(header, h3, desc, list, footer, loadingBadge);
 
   const cardState = { cfg, card, count, list, searchLink, hint, reloadBtn };
   cards.set(cfg.id, cardState);
@@ -295,6 +298,7 @@ async function refreshCard(cardState, state, token) {
   cardState.count.textContent = '…';
   setListPlaceholder(cardState.list, 'Loading…');
   cardState.card.classList.add('is-loading');
+  cardState.card.setAttribute('aria-busy', 'true');
   try {
     await rateLimit(token);
     markFetched();
@@ -321,6 +325,7 @@ async function refreshCard(cardState, state, token) {
     throw err;
   } finally {
     cardState.card.classList.remove('is-loading');
+    cardState.card.removeAttribute('aria-busy');
   }
 }
 
