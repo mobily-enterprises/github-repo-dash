@@ -76,6 +76,26 @@ describe('fetchSearch', () => {
     await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 403 forbidden');
   });
 
+  it('prefers nested errors[0].message', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve({ errors: [{ message: 'nested message' }] })
+    });
+    await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 400 nested message');
+  });
+
+  it('falls back to documentation_url', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: () => Promise.resolve({ documentation_url: 'https://docs' })
+    });
+    await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 401 https://docs');
+  });
+
   it('falls back to string body for error text', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
@@ -114,6 +134,16 @@ describe('fetchSearch', () => {
       json: () => Promise.resolve({})
     });
     await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 502 Bad Gateway');
+  });
+
+  it('returns fallback when body is null/empty', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve(null)
+    });
+    await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 400 Bad Request');
   });
 
   it('standardizes abort errors', async () => {
