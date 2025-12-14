@@ -136,6 +136,16 @@ describe('fetchSearch', () => {
     await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 502 Bad Gateway');
   });
 
+  it('returns fallback when body is null/empty', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve(null)
+    });
+    await expect(fetchSearch('q')).rejects.toThrow('GitHub search failed: 400 Bad Request');
+  });
+
   it('standardizes abort errors', async () => {
     const abortError = new Error('aborted');
     abortError.name = 'AbortError';

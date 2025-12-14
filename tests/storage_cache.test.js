@@ -21,6 +21,16 @@ describe('isCacheFresh', () => {
     expect(isCacheFresh(cache, CARDS_CACHE_TTL_MS)).toBe(true);
   });
 
+  it('returns true when per-card cachedAt is fresh', () => {
+    const cache = { cards: { a: { cachedAt: Date.now() } } };
+    expect(isCacheFresh(cache, CARDS_CACHE_TTL_MS)).toBe(true);
+  });
+
+  it('returns false when card timestamps are missing', () => {
+    const cache = { cards: { a: {} }, cachedAt: null };
+    expect(isCacheFresh(cache, CARDS_CACHE_TTL_MS)).toBe(false);
+  });
+
   it('returns false when cache is stale or missing timestamp', () => {
     const stale = { cachedAt: Date.now() - CARDS_CACHE_TTL_MS - 1 };
     expect(isCacheFresh(stale, CARDS_CACHE_TTL_MS)).toBe(false);
