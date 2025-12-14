@@ -319,7 +319,7 @@ async function refreshSection(section) {
     const cardState = sectionCards[i];
     try {
       await refreshCard(cardState, state, token);
-    } catch (err) {
+    } catch {
       errors += 1;
     }
     if (i < sectionCards.length - 1) await sleep(delay);
