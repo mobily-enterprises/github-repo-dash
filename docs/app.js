@@ -7,7 +7,7 @@ import {
   SEARCH_DELAY_MS,
   REPO_REGEX
 } from './config.js';
-import { sleep, createEl, setListPlaceholder, normalizeHandle, isValidRepo } from './utils.js';
+import { sleep, createEl, setListPlaceholder, isValidRepo } from './utils.js';
 import { extractDri, formatDri, extractAssignee, formatAssignee } from './dri.js';
 import {
   loadSettings,
@@ -20,6 +20,7 @@ import {
 } from './storage.js';
 import { renderNote, pruneNoteBindings } from './notes.js';
 import { rateLimit, fetchSearch, markFetched } from './network.js';
+import { buildQuery, getQueryOverrides } from './core.js';
 
 // DOM references
 const repoTitle = document.getElementById('repo-title');
@@ -51,58 +52,11 @@ const grids = {
 // State holders
 const cards = new Map();
 
-function getQueryOverrides() {
-  const params = new URLSearchParams(window.location.search);
-  const rawRepo = params.get('repo');
-  const rawDri = params.get('dri_token');
-  const rawHandle = params.get('handle');
-  const rawCoderBody = params.get('coder_body_flag');
-  const rawCoderLabel = params.get('coder_label_flag');
-  const rawUseLabels = params.get('use_labels');
-
-  const repo = rawRepo && rawRepo.trim() ? rawRepo.trim() : '';
-  const dri = rawDri && rawDri.trim() ? rawDri.trim() : '';
-  const handle = rawHandle && rawHandle.trim() ? normalizeHandle(rawHandle, DEFAULTS.handle) : '';
-  const coderBodyFlag = rawCoderBody && rawCoderBody.trim() ? rawCoderBody.trim() : '';
-  const coderLabelFlag = rawCoderLabel && rawCoderLabel.trim() ? rawCoderLabel.trim() : '';
-  const useLabels =
-    rawUseLabels !== null
-      ? ['1', 'true', 'yes', 'on'].includes(rawUseLabels.trim().toLowerCase())
-      : null;
-
-  return {
-    repo,
-    dri,
-    handle,
-    coderBodyFlag,
-    coderLabelFlag,
-    hasRepo: !!repo,
-    hasDri: !!dri,
-    hasHandle: !!handle,
-    hasCoderBodyFlag: !!coderBodyFlag,
-    hasCoderLabelFlag: !!coderLabelFlag,
-    useLabels,
-    hasUseLabels: useLabels !== null
-  };
-}
-
 function setStatus(section, text, state = '') {
   const el = statusEls[section];
   if (!el) return;
   el.textContent = text;
   el.dataset.state = state;
-}
-
-function buildQuery(cfg, state) {
-  const replacement = state.useLabels ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
-  const query = cfg.query
-    .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
-    .replace(/__HANDLE__/g, state.handle)
-    .replace(/__HANDLE_BARE__/g, state.handleBare)
-    .replace(/__DRI__/g, replacement(state.driToken))
-    .trim();
-  if (!state.repo) return query;
-  return `repo:${state.repo} ${query}`;
 }
 
 function buildSearchUrl(state, cfg) {
