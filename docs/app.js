@@ -219,28 +219,24 @@ function renderTitle() {
 function hydrateCardsFromCache(state) {
   const cache = getCardCache();
   if (!cache?.fingerprint || cache.fingerprint !== makeFingerprint(state)) return;
-  if (!isCacheFresh(cache, CARDS_CACHE_TTL_MS)) {
-    Object.keys(statusEls).forEach((section) => {
-      markSectionStale(section);
-      setStatus(section, 'Cache expired; please reload.', 'warn');
-    });
-    return;
-  }
-  const sectionHasCache = new Set();
+  const sectionHasFresh = new Set();
+  const sectionStale = new Set();
   Object.entries(cache.cards || {}).forEach(([id, payload]) => {
     const cardState = cards.get(id);
     if (!cardState) return;
     if (!isCacheFresh({ cards: { single: payload } }, CARDS_CACHE_TTL_MS)) {
-      setStatus(cardState.cfg.section, 'Cache expired; please reload.', 'warn');
+      markSectionStale(cardState.cfg.section);
+      sectionStale.add(cardState.cfg.section);
       return;
     }
     const items = payload?.items || [];
     const count = payload?.total_count;
     cardState.count.textContent = count?.toLocaleString?.() || count || '0';
     renderItems(cardState, items, state);
-    sectionHasCache.add(cardState.cfg.section);
+    sectionHasFresh.add(cardState.cfg.section);
   });
-  sectionHasCache.forEach((section) => setStatus(section, 'Loaded from cache (fresh)', 'ok'));
+  sectionHasFresh.forEach((section) => setStatus(section, 'Loaded from cache (fresh)', 'ok'));
+  sectionStale.forEach((section) => setStatus(section, 'Cache expired; please reload.', 'warn'));
 }
 
 function renderItems(cardState, items, state) {
