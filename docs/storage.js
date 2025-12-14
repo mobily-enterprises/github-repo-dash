@@ -17,7 +17,7 @@ export function loadSettings(inputs, overrides) {
     if (!overrides.hasUseLabels && typeof saved.useLabels === 'boolean' && useLabelsInput) {
       useLabelsInput.checked = saved.useLabels;
     }
-  } catch (_) {
+  } catch {
     // ignore malformed storage
   }
 
@@ -48,7 +48,7 @@ export function loadSettings(inputs, overrides) {
 
   try {
     notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
-  } catch (_) {
+  } catch {
     notesStore = {};
   }
   try {
@@ -60,7 +60,7 @@ export function loadSettings(inputs, overrides) {
         cachedAt: typeof cache.cachedAt === 'number' ? cache.cachedAt : 0
       };
     }
-  } catch (_) {
+  } catch {
     cardCache = { fingerprint: '', cards: {}, cachedAt: 0 };
   }
 }
@@ -70,7 +70,7 @@ export function saveSettings(inputs, overrides) {
   let prev = {};
   try {
     prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
-  } catch (_) {
+  } catch {
     prev = {};
   }
   const data = { ...prev };
@@ -95,7 +95,7 @@ export function saveSettings(inputs, overrides) {
 export function persistNotes() {
   try {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notesStore));
-  } catch (_) {
+  } catch {
     // ignore storage errors
   }
 }
@@ -103,7 +103,7 @@ export function persistNotes() {
 export function persistCardCache() {
   try {
     localStorage.setItem(CARDS_CACHE_KEY, JSON.stringify(cardCache));
-  } catch (_) {
+  } catch {
     // ignore storage errors
   }
 }
