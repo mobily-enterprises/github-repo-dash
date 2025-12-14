@@ -432,8 +432,8 @@ section h2 {
 }
 
 .card.is-loading {
-  border-color: rgba(77, 225, 211, 0.65);
-  box-shadow: 0 18px 30px rgba(4, 8, 18, 0.55);
+  border-color: rgba(77, 225, 211, 0.9);
+  box-shadow: 0 20px 36px rgba(4, 8, 18, 0.65), 0 0 0 2px rgba(77, 225, 211, 0.35);
 }
 
 .card.is-loading .card-header,
@@ -441,7 +441,8 @@ section h2 {
 .card.is-loading p,
 .card.is-loading .card-footer,
 .card.is-loading .item-list {
-  opacity: 0.75;
+  opacity: 0.38;
+  filter: saturate(0.6);
 }
 
 .loading-badge {
@@ -481,9 +482,12 @@ section h2 {
   position: absolute;
   inset: 0;
   border-radius: 14px;
-  background: linear-gradient(120deg, transparent 0%, rgba(77, 225, 211, 0.08) 40%, rgba(77, 225, 211, 0.16) 50%, rgba(77, 225, 211, 0.08) 60%, transparent 100%);
+  background:
+    linear-gradient(120deg, transparent 0%, rgba(77, 225, 211, 0.12) 35%, rgba(77, 225, 211, 0.28) 50%, rgba(77, 225, 211, 0.12) 65%, transparent 100%),
+    linear-gradient(180deg, rgba(0, 10, 25, 0.55), rgba(0, 10, 25, 0.55));
   animation: shimmer 1.2s linear infinite;
   pointer-events: none;
+  backdrop-filter: blur(3px);
 }
 
 @keyframes shimmer {
