@@ -50,7 +50,7 @@ By default, the dashboard searches **labels** for DRI (and coder flag) tokens. I
 
 Each query is prefixed with `repo:<owner/repo>` once you enter a valid repo.
 
-### Toggle: “Look in body for DRI:@… and coder flags (off = labels)”
+### Toggle: “Look in body for DRI:@… and coder flags (default: labels)”
 
 - Default: **off** → searches use labels (`label:"DRI:@user"` and `DRI_is_coder`).
 - When **on**: searches use body text (`in:body "DRI:@user"` and body `coder` flag).
