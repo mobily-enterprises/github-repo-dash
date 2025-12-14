@@ -81,7 +81,7 @@ export const config = [
     tone: 'error',
     title: 'PRs with assignee but no DRI',
     desc: 'Assigned but missing a DRI. Likely erroneous.',
-    query: 'is:pr is:open assignee:* in:body NOT "__DRI__"'
+    query: 'is:pr is:open assignee:* NOT __DRI__'
   }
 ];
 
@@ -103,7 +103,7 @@ export const DEFAULTS = {
   token: '',
   coderBodyFlag: 'coder',
   coderLabelFlag: 'DRI_is_coder',
-  useLabels: false
+  useBody: false
 };
 
 export const SEARCH_DELAY_MS = 5000;

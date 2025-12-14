@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
+  const useBodyInput = document.createElement('input');
+  useBodyInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
 }
 
 beforeEach(() => {
@@ -55,7 +55,7 @@ describe('saveSettings with explicit state', () => {
       coderBodyFlag: 'coderFlag',
       coderLabelFlag: 'labelFlag',
       handle: 'alice',
-      useLabels: true
+      useBody: true
     };
     saveSettings(inputs, {}, state);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -63,7 +63,7 @@ describe('saveSettings with explicit state', () => {
     expect(saved.dri).toBe('DRI:@override');
     expect(saved.handle).toBe('@alice');
     expect(inputs.handleInput.value).toBe('@alice');
-    expect(inputs.useLabelsInput.checked).toBe(true);
+    expect(inputs.useBodyInput.checked).toBe(true);
   });
 
   it('keeps locked fields persisted but reflects override state in inputs', () => {
@@ -75,18 +75,18 @@ describe('saveSettings with explicit state', () => {
         handle: '@locked',
         coderBodyFlag: 'lockedBody',
         coderLabelFlag: 'lockedLabel',
-        useLabels: false
+        useBody: false
       })
     );
     const inputs = createInputs();
-    inputs.useLabelsInput.checked = false;
+    inputs.useBodyInput.checked = false;
     const overrides = {
       hasRepo: true,
       hasDri: true,
       hasCoderBodyFlag: true,
       hasCoderLabelFlag: true,
       hasHandle: true,
-      hasUseLabels: true
+      hasUseBody: true
     };
     const state = {
       repo: 'override/repo',
@@ -94,7 +94,7 @@ describe('saveSettings with explicit state', () => {
       handle: '@override',
       coderBodyFlag: 'bodyOverride',
       coderLabelFlag: 'labelOverride',
-      useLabels: true
+      useBody: true
     };
     saveSettings(inputs, overrides, state);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -103,29 +103,29 @@ describe('saveSettings with explicit state', () => {
     expect(saved.coderBodyFlag).toBe('lockedBody');
     expect(saved.coderLabelFlag).toBe('lockedLabel');
     expect(saved.handle).toBe('@locked');
-    expect(saved.useLabels).toBe(false);
+    expect(saved.useBody).toBe(false);
     expect(inputs.repoInput.value).toBe('override/repo');
     expect(inputs.driInput.value).toBe('DRI:@override');
     expect(inputs.coderBodyInput.value).toBe('bodyOverride');
     expect(inputs.coderLabelInput.value).toBe('labelOverride');
     expect(inputs.handleInput.value).toBe('@override');
-    expect(inputs.useLabelsInput.checked).toBe(false);
+    expect(inputs.useBodyInput.checked).toBe(false);
   });
 
-  it('respects stateOverride.useLabels when toggle input is missing', () => {
+  it('respects stateOverride.useBody when toggle input is missing', () => {
     const inputs = createInputs();
-    delete inputs.useLabelsInput;
-    saveSettings(inputs, {}, { repo: 'r/x', driToken: 'DRI:@x', handle: '@x', useLabels: true });
+    delete inputs.useBodyInput;
+    saveSettings(inputs, {}, { repo: 'r/x', driToken: 'DRI:@x', handle: '@x', useBody: true });
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    expect(saved.useLabels).toBe(true);
+    expect(saved.useBody).toBe(true);
   });
 
-  it('defaults useLabels when toggle input is missing and no override', () => {
+  it('defaults useBody when toggle input is missing and no override', () => {
     const inputs = createInputs();
-    delete inputs.useLabelsInput;
+    delete inputs.useBodyInput;
     saveSettings(inputs, {}, { repo: 'r/x', driToken: 'DRI:@x', handle: '@x' });
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    expect(saved.useLabels).toBe(false);
+    expect(saved.useBody).toBe(false);
   });
 
   it('writes defaults when inputs are blank and no overrides', () => {
@@ -137,7 +137,7 @@ describe('saveSettings with explicit state', () => {
     expect(saved.coderBodyFlag).toBe(DEFAULTS.coderBodyFlag);
     expect(saved.coderLabelFlag).toBe(DEFAULTS.coderLabelFlag);
     expect(saved.handle).toBe(DEFAULTS.handle);
-    expect(saved.useLabels).toBe(DEFAULTS.useLabels);
+    expect(saved.useBody).toBe(DEFAULTS.useBody);
     expect(inputs.repoInput.value).toBe(DEFAULTS.repo);
     expect(inputs.handleInput.value).toBe(DEFAULTS.handle);
   });

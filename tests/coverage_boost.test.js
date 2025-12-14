@@ -13,9 +13,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
+  const useBodyInput = document.createElement('input');
+  useBodyInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
 }
 
 beforeEach(() => {
@@ -43,7 +43,7 @@ describe('core coverage bumps', () => {
     expect(overrides.hasHandle).toBe(true);
   });
 
-  it('builds in-body query when repo is empty and useLabels is on', () => {
+  it('builds in-body query when repo is empty and useBody is on', () => {
     const cfg = { query: '__DRI__ __DRI_HANDLE__ __HANDLE__ __HANDLE_BARE__' };
     const state = {
       repo: '',
@@ -52,7 +52,7 @@ describe('core coverage bumps', () => {
       handleBare: 'me',
       coderBodyFlag: 'coder',
       coderLabelFlag: 'DRI_is_coder',
-      useLabels: true
+      useBody: true
     };
     const query = buildQuery(cfg, state);
     expect(query.startsWith('repo:')).toBe(false);
@@ -141,10 +141,10 @@ describe('dri formatting branches', () => {
 describe('storage branches', () => {
   it('loads defaults and coerces weird toggle values', () => {
     const inputs = createInputs();
-    inputs.useLabelsInput.checked = 'maybe';
+    inputs.useBodyInput.checked = 'maybe';
     loadSettings(inputs, {});
     expect(inputs.tokenInput.value).toBe(DEFAULTS.token);
-    expect(inputs.useLabelsInput.checked).toBe(DEFAULTS.useLabels);
+    expect(inputs.useBodyInput.checked).toBe(DEFAULTS.useBody);
   });
 
   it('respects overrides and trims values on save', () => {
@@ -157,7 +157,7 @@ describe('storage branches', () => {
         coderLabelFlag: 'savedLabel',
         handle: '@saved',
         token: 'old',
-        useLabels: false
+        useBody: false
       })
     );
     const inputs = createInputs();
@@ -167,14 +167,14 @@ describe('storage branches', () => {
     inputs.coderLabelInput.value = ' newLabel ';
     inputs.handleInput.value = ' newHandle ';
     inputs.tokenInput.value = ' secret ';
-    inputs.useLabelsInput.checked = true;
+    inputs.useBodyInput.checked = true;
     const overrides = {
       hasRepo: true,
       hasDri: false,
       hasCoderBodyFlag: false,
       hasCoderLabelFlag: true,
       hasHandle: true,
-      hasUseLabels: false
+      hasUseBody: false
     };
     saveSettings(inputs, overrides);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -184,7 +184,7 @@ describe('storage branches', () => {
     expect(saved.coderLabelFlag).toBe('savedLabel');
     expect(saved.handle).toBe('@saved');
     expect(saved.token).toBe('secret');
-    expect(saved.useLabels).toBe(true);
+    expect(saved.useBody).toBe(true);
     expect(inputs.repoInput.value).toBe('saved/repo');
     expect(inputs.coderLabelInput.value).toBe('savedLabel');
   });
@@ -198,8 +198,8 @@ describe('storage branches', () => {
       coderBodyFlag: 'bodyFlag',
       coderLabelFlag: 'labelFlag',
       handle: '@locked',
-      hasUseLabels: true,
-      useLabels: true
+      hasUseBody: true,
+      useBody: true
     };
     loadSettings(inputs, overrides);
     expect(inputs.repoInput.value).toBe('locked/repo');
@@ -208,7 +208,7 @@ describe('storage branches', () => {
     expect(inputs.coderLabelInput.value).toBe('labelFlag');
     expect(inputs.handleInput.value).toBe('@locked');
     expect(inputs.tokenInput.value).toBe('keep-me');
-    expect(inputs.useLabelsInput.checked).toBe(true);
+    expect(inputs.useBodyInput.checked).toBe(true);
   });
 
   it('loads saved token when present', () => {
@@ -220,7 +220,7 @@ describe('storage branches', () => {
 
   it('handles missing toggle input', () => {
     const inputs = createInputs();
-    delete inputs.useLabelsInput;
+    delete inputs.useBodyInput;
     loadSettings(inputs, {});
     expect(inputs.repoInput.value).toBe(DEFAULTS.repo);
   });
@@ -228,7 +228,7 @@ describe('storage branches', () => {
   it('saves with locked overrides and null prior data', () => {
     localStorage.setItem(STORAGE_KEY, 'null');
     const inputs = createInputs();
-    delete inputs.useLabelsInput;
+    delete inputs.useBodyInput;
     const overrides = {
       hasRepo: true,
       hasDri: true,

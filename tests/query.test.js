@@ -10,7 +10,7 @@ const baseState = {
   handleBare: 'alice',
   coderBodyFlag: DEFAULTS.coderBodyFlag,
   coderLabelFlag: DEFAULTS.coderLabelFlag,
-  useLabels: false
+  useBody: false
 };
 
 const cfg = { query: 'is:pr __DRI__ assignee:__HANDLE_BARE__' };
@@ -21,8 +21,8 @@ describe('buildQuery', () => {
     expect(q).toBe('repo:owner/repo is:pr label:"DRI:@" assignee:alice');
   });
 
-  it('uses body when useLabels is true', () => {
-    const q = buildQuery(cfg, { ...baseState, useLabels: true });
+  it('uses body when useBody is true', () => {
+    const q = buildQuery(cfg, { ...baseState, useBody: true });
     expect(q).toBe('repo:owner/repo is:pr in:body "DRI:@" assignee:alice');
   });
 

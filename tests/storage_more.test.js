@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
+  const useBodyInput = document.createElement('input');
+  useBodyInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
 }
 
 beforeEach(() => {
@@ -20,11 +20,11 @@ beforeEach(() => {
 });
 
 describe('getState defaults when toggle missing', () => {
-  it('uses DEFAULTS.useLabels when no input provided', () => {
+  it('uses DEFAULTS.useBody when no input provided', () => {
     const inputs = createInputs();
-    delete inputs.useLabelsInput;
+    delete inputs.useBodyInput;
     const state = getState(inputs);
-    expect(state.useLabels).toBe(DEFAULTS.useLabels);
+    expect(state.useBody).toBe(DEFAULTS.useBody);
   });
 
   it('normalizes handle and bare parts from state override paths', () => {
