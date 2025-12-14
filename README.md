@@ -6,7 +6,7 @@ A lightweight, static dashboard for triaging GitHub repositories. It shows live 
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and PR guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and PR guidelines, and read the full codebase tour in [ONBOARDING.md](ONBOARDING.md).
 
 ## Workflow: DRI, Reviewer vs Coder, and Assignee
 
