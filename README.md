@@ -2,12 +2,7 @@
 
 A lightweight, static dashboard for triaging GitHub repositories. It shows live counts and recent items for issues and pull requests using GitHub Search, with cards for common states (unlabeled issues, PRs without DRIs, your assignments, etc.). Everything runs in the browser; just provide a repo name and, optionally, a personal access token for higher rate limits.
 
-## Dashboard
-
-Open `docs/index.html` locally or via a simple static server to use the dashboard.
-
-- Dashboard page: [docs/index.html](docs/index.html)
-- Repository: mobily-enterprises/github-repo-dash
+[Dashboard page](https://mobily-enterprises.github.io/github-repo-dash)
 
 ## Notes
 
