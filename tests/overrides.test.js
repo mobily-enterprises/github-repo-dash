@@ -10,7 +10,7 @@ const baseState = {
   handleBare: 'jane',
   coderBodyFlag: DEFAULTS.coderBodyFlag,
   coderLabelFlag: DEFAULTS.coderLabelFlag,
-  useLabels: false
+  useBodyText: false
 };
 
 beforeEach(() => {
@@ -22,23 +22,23 @@ describe('getQueryOverrides', () => {
     const o = getQueryOverrides();
     expect(o.repo).toBe('');
     expect(o.hasRepo).toBe(false);
-    expect(o.hasUseLabels).toBe(false);
+    expect(o.hasUseBodyText).toBe(false);
   });
 
-  it('parses handle and use_labels=true', () => {
-    window.history.replaceState({}, '', '/?handle=bob&use_labels=true');
+  it('parses handle and use_body_text=true', () => {
+    window.history.replaceState({}, '', '/?handle=bob&use_body_text=true');
     const o = getQueryOverrides();
     expect(o.handle).toBe('@bob');
     expect(o.hasHandle).toBe(true);
-    expect(o.useLabels).toBe(true);
-    expect(o.hasUseLabels).toBe(true);
+    expect(o.useBodyText).toBe(true);
+    expect(o.hasUseBodyText).toBe(true);
   });
 
-  it('parses use_labels=false', () => {
-    window.history.replaceState({}, '', '/?use_labels=false');
+  it('parses use_body_text=false', () => {
+    window.history.replaceState({}, '', '/?use_body_text=false');
     const o = getQueryOverrides();
-    expect(o.useLabels).toBe(false);
-    expect(o.hasUseLabels).toBe(true);
+    expect(o.useBodyText).toBe(false);
+    expect(o.hasUseBodyText).toBe(true);
   });
 });
 

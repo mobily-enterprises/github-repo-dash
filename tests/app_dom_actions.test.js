@@ -96,10 +96,10 @@ describe('app wiring actions', () => {
     expect(pullsCards.length).toBe(pullsConfigCount);
   });
 
-  it('switching use-labels marks sections stale and rebuilds queries', async () => {
+  it('switching use-body-text marks sections stale and rebuilds queries', async () => {
     const statusBefore = document.getElementById('status-issues').textContent;
     expect(statusBefore).toBe('Not loaded');
-    const toggle = document.getElementById('use-labels');
+    const toggle = document.getElementById('use-body-text');
     toggle.checked = true;
     toggle.dispatchEvent(new Event('change', { bubbles: true }));
     await flush();

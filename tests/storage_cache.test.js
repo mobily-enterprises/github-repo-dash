@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
+  const useBodyTextInput = document.createElement('input');
+  useBodyTextInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyTextInput };
 }
 
 describe('isCacheFresh', () => {

@@ -35,7 +35,7 @@ const coderLabelInput = document.getElementById('coder-label-flag');
 const handleInput = document.getElementById('handle');
 const tokenInput = document.getElementById('token');
 const clearTokenBtn = document.getElementById('clear-token');
-const useLabelsInput = document.getElementById('use-labels');
+const useBodyTextInput = document.getElementById('use-body-text');
 const loadButtons = {
   pulls: document.getElementById('load-pulls'),
   triage: document.getElementById('load-triage'),
@@ -64,8 +64,8 @@ function normalizeAppState(next) {
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = (next.coderBodyFlag || '').trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = (next.coderLabelFlag || '').trim() || DEFAULTS.coderLabelFlag;
-  const useLabels = typeof next.useLabels === 'boolean' ? next.useLabels : DEFAULTS.useLabels;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+  const useBodyText = typeof next.useBodyText === 'boolean' ? next.useBodyText : DEFAULTS.useBodyText;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBodyText };
 }
 
 function setStatus(section, text, state = '') {
@@ -369,7 +369,7 @@ const inputs = {
   coderLabelInput,
   handleInput,
   tokenInput,
-  useLabelsInput
+  useBodyTextInput
 };
 
 function init() {
@@ -425,9 +425,9 @@ function init() {
       applyStatePatch({ handle: handleInput.value || DEFAULTS.handle })
     );
   }
-  if (useLabelsInput) {
-    useLabelsInput.addEventListener('change', () =>
-      applyStatePatch({ useLabels: !!useLabelsInput.checked })
+  if (useBodyTextInput) {
+    useBodyTextInput.addEventListener('change', () =>
+      applyStatePatch({ useBodyText: !!useBodyTextInput.checked })
     );
   }
 

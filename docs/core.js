@@ -3,8 +3,8 @@ import { normalizeHandle, isValidRepo } from './utils.js';
 
 // Build GitHub search query from config template and current state.
 export function buildQuery(cfg, state) {
-  // useLabels flag means "search body instead of labels" (name is historical)
-  const useBodySource = !!state.useLabels;
+  // useBodyText flag means "search body instead of labels" (name is historical)
+  const useBodySource = !!state.useBodyText;
   const replacement = useBodySource ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
   const query = cfg.query
     .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
@@ -24,16 +24,16 @@ export function getQueryOverrides() {
   const rawHandle = params.get('handle');
   const rawCoderBody = params.get('coder_body_flag');
   const rawCoderLabel = params.get('coder_label_flag');
-  const rawUseLabels = params.get('use_labels');
+  const rawUseBodyText = params.get('use_body_text');
 
   const repo = rawRepo && rawRepo.trim() ? rawRepo.trim() : '';
   const dri = rawDri && rawDri.trim() ? rawDri.trim() : '';
   const handle = rawHandle && rawHandle.trim() ? normalizeHandle(rawHandle, DEFAULTS.handle) : '';
   const coderBodyFlag = rawCoderBody && rawCoderBody.trim() ? rawCoderBody.trim() : '';
   const coderLabelFlag = rawCoderLabel && rawCoderLabel.trim() ? rawCoderLabel.trim() : '';
-  const useLabels =
-    rawUseLabels !== null
-      ? ['1', 'true', 'yes', 'on'].includes(rawUseLabels.trim().toLowerCase())
+  const useBodyText =
+    rawUseBodyText !== null
+      ? ['1', 'true', 'yes', 'on'].includes(rawUseBodyText.trim().toLowerCase())
       : null;
 
   return {
@@ -42,13 +42,13 @@ export function getQueryOverrides() {
     handle,
     coderBodyFlag,
     coderLabelFlag,
-    useLabels,
+    useBodyText,
     hasRepo: !!repo,
     hasDri: !!dri,
     hasHandle: !!handle,
     hasCoderBodyFlag: !!coderBodyFlag,
     hasCoderLabelFlag: !!coderLabelFlag,
-    hasUseLabels: useLabels !== null
+    hasUseBodyText: useBodyText !== null
   };
 }
 

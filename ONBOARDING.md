@@ -81,7 +81,7 @@ markAllSectionsStale();
 hydrateCardsFromCache(initialState);
 ```
 
-`normalizeAppState` ensures blank fields fall back to `DEFAULTS` (repo/handle/DRI token/coder flags/useLabels).
+`normalizeAppState` ensures blank fields fall back to `DEFAULTS` (repo/handle/DRI token/coder flags/useBodyText).
 
 ## Card catalog (`docs/config.js`)
 
@@ -114,7 +114,7 @@ Defaults and constants (timeouts, storage keys, regex) also live here.
 `buildQuery(cfg, state)` replaces tokens based on the **source of DRI data**:
 
 ```js
-const replacement = state.useLabels
+const replacement = state.useBodyText
   ? (token) => `in:body "${token}"`   // when “Look in body” is ON
   : (token) => `label:"${token}"`;    // default: labels
 
@@ -127,11 +127,11 @@ const query = cfg.query
 return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
 ```
 
-`getQueryOverrides()` reads `?repo=...&handle=@you&use_labels=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseLabels`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
+`getQueryOverrides()` reads `?repo=...&handle=@you&use_body_text=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseBodyText`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
 
 ## State store (`docs/state.js`)
 
-This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useLabels) and notifies listeners when it changes.
+This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useBodyText) and notifies listeners when it changes.
 
 API:
 
@@ -202,15 +202,15 @@ Example: pulling a state snapshot from inputs (used at init):
 
 ```js
 export function getState(inputs) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useLabelsInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useBodyTextInput } = inputs;
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
   const handle = normalizeHandle(handleInput.value || DEFAULTS.handle, DEFAULTS.handle);
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
-  const useLabels = useLabelsInput ? !!useLabelsInput.checked : DEFAULTS.useLabels;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+  const useBodyText = useBodyTextInput ? !!useBodyTextInput.checked : DEFAULTS.useBodyText;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBodyText };
 }
 ```
 
@@ -306,7 +306,7 @@ The “clear token” button empties the token field and triggers the same flow.
 ### Toggle: “Look in body for DRI:@… and coder flags (off = labels)”
 
 - When changed, state updates and **all cards are marked stale** because queries change.
-- Persisted in localStorage; can also be forced via `?use_labels=true|false`.
+- Persisted in localStorage; can also be forced via `?use_body_text=true|false`.
 - When ON, DRI tokens are searched in `in:body`; when OFF (default), in labels.
 
 ## Notes subsystem (`docs/notes.js`)
@@ -371,7 +371,7 @@ Edit `DEFAULTS` in `config.js` (e.g., change `coderBodyFlag` or `coderLabelFlag`
 - `&handle=@you` — prefill/lock handle.
 - `&dri_token=DRI:@` — override token prefix.
 - `&coder_body_flag=coder` / `&coder_label_flag=DRI_is_coder` — override flags.
-- `&use_labels=true|false` — toggle body vs labels (true = look in body; false = labels).
+- `&use_body_text=true|false` — toggle body vs labels (true = look in body; false = labels).
 
 Locked fields are disabled in the UI; saved settings will not override them.
 

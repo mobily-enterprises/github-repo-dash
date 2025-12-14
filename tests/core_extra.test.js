@@ -6,17 +6,17 @@ beforeEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-describe('getQueryOverrides use_labels parsing', () => {
-  it('treats missing use_labels as absent', () => {
+describe('getQueryOverrides use_body_text parsing', () => {
+  it('treats missing use_body_text as absent', () => {
     const o = getQueryOverrides();
-    expect(o.hasUseLabels).toBe(false);
-    expect(o.useLabels).toBe(null);
+    expect(o.hasUseBodyText).toBe(false);
+    expect(o.useBodyText).toBe(null);
   });
 
-  it('handles unknown use_labels value as falsey override', () => {
-    window.history.replaceState({}, '', '/?use_labels=maybe');
+  it('handles unknown use_body_text value as falsey override', () => {
+    window.history.replaceState({}, '', '/?use_body_text=maybe');
     const o = getQueryOverrides();
-    expect(o.useLabels).toBe(false);
-    expect(o.hasUseLabels).toBe(true);
+    expect(o.useBodyText).toBe(false);
+    expect(o.hasUseBodyText).toBe(true);
   });
 });

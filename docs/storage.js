@@ -5,7 +5,7 @@ let notesStore = {};
 let cardCache = { fingerprint: '', cards: {}, cachedAt: 0 };
 
 export function loadSettings(inputs, overrides) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyTextInput } = inputs;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (saved.repo) repoInput.value = saved.repo;
@@ -14,8 +14,8 @@ export function loadSettings(inputs, overrides) {
     if (saved.coderLabelFlag) coderLabelInput.value = saved.coderLabelFlag;
     if (saved.handle) handleInput.value = normalizeHandle(saved.handle, DEFAULTS.handle);
     if (saved.token) tokenInput.value = saved.token;
-    if (!overrides.hasUseLabels && typeof saved.useLabels === 'boolean' && useLabelsInput) {
-      useLabelsInput.checked = saved.useLabels;
+    if (!overrides.hasUseBodyText && typeof saved.useBodyText === 'boolean' && useBodyTextInput) {
+      useBodyTextInput.checked = saved.useBodyText;
     }
   } catch {
     // ignore malformed storage
@@ -26,7 +26,7 @@ export function loadSettings(inputs, overrides) {
   if (overrides.coderBodyFlag) coderBodyInput.value = overrides.coderBodyFlag;
   if (overrides.coderLabelFlag) coderLabelInput.value = overrides.coderLabelFlag;
   if (overrides.handle) handleInput.value = normalizeHandle(overrides.handle, DEFAULTS.handle);
-  if (overrides.hasUseLabels && useLabelsInput) useLabelsInput.checked = !!overrides.useLabels;
+  if (overrides.hasUseBodyText && useBodyTextInput) useBodyTextInput.checked = !!overrides.useBodyText;
 
   if (!repoInput.value) repoInput.value = DEFAULTS.repo;
   if (!driInput.value) driInput.value = DEFAULTS.dri;
@@ -34,9 +34,9 @@ export function loadSettings(inputs, overrides) {
   if (!coderLabelInput.value) coderLabelInput.value = DEFAULTS.coderLabelFlag;
   if (!handleInput.value) handleInput.value = DEFAULTS.handle;
   if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
-  if (useLabelsInput && !overrides.hasUseLabels) {
-    useLabelsInput.checked =
-      typeof useLabelsInput.checked === 'boolean' ? useLabelsInput.checked : DEFAULTS.useLabels;
+  if (useBodyTextInput && !overrides.hasUseBodyText) {
+    useBodyTextInput.checked =
+      typeof useBodyTextInput.checked === 'boolean' ? useBodyTextInput.checked : DEFAULTS.useBodyText;
   }
 
   repoInput.disabled = !!overrides.hasRepo;
@@ -44,7 +44,7 @@ export function loadSettings(inputs, overrides) {
   coderBodyInput.disabled = !!overrides.hasCoderBodyFlag;
   coderLabelInput.disabled = !!overrides.hasCoderLabelFlag;
   handleInput.disabled = !!overrides.hasHandle;
-  if (useLabelsInput) useLabelsInput.disabled = !!overrides.hasUseLabels;
+  if (useBodyTextInput) useBodyTextInput.disabled = !!overrides.hasUseBodyText;
 
   try {
     notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
@@ -66,7 +66,7 @@ export function loadSettings(inputs, overrides) {
 }
 
 export function saveSettings(inputs, overrides, stateOverride) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyTextInput } = inputs;
   let prev = {};
   try {
     prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
@@ -78,8 +78,8 @@ export function saveSettings(inputs, overrides, stateOverride) {
   const prevCoderBody = (prev.coderBodyFlag || '').trim() || DEFAULTS.coderBodyFlag;
   const prevCoderLabel = (prev.coderLabelFlag || '').trim() || DEFAULTS.coderLabelFlag;
   const prevHandle = normalizeHandle(prev.handle, DEFAULTS.handle);
-  const prevUseLabels =
-    typeof prev.useLabels === 'boolean' ? prev.useLabels : DEFAULTS.useLabels;
+  const prevUseBodyText =
+    typeof prev.useBodyText === 'boolean' ? prev.useBodyText : DEFAULTS.useBodyText;
   const repoRaw =
     typeof stateOverride?.repo === 'string' ? stateOverride.repo : repoInput.value;
   const repo = (repoRaw || '').toString().trim() || DEFAULTS.repo;
@@ -100,10 +100,10 @@ export function saveSettings(inputs, overrides, stateOverride) {
     typeof stateOverride?.handle === 'string' ? stateOverride.handle : handleInput.value,
     DEFAULTS.handle
   );
-  let useLabels = DEFAULTS.useLabels;
-  if (overrides.hasUseLabels) useLabels = prevUseLabels;
-  else if (typeof stateOverride?.useLabels === 'boolean') useLabels = stateOverride.useLabels;
-  else if (useLabelsInput) useLabels = !!useLabelsInput.checked;
+  let useBodyText = DEFAULTS.useBodyText;
+  if (overrides.hasUseBodyText) useBodyText = prevUseBodyText;
+  else if (typeof stateOverride?.useBodyText === 'boolean') useBodyText = stateOverride.useBodyText;
+  else if (useBodyTextInput) useBodyText = !!useBodyTextInput.checked;
   const token = tokenInput.value.trim();
   const data = { ...prev };
   if (!overrides.hasRepo) data.repo = repo;
@@ -112,14 +112,14 @@ export function saveSettings(inputs, overrides, stateOverride) {
   if (!overrides.hasCoderLabelFlag) data.coderLabelFlag = coderLabelFlag;
   if (!overrides.hasHandle) data.handle = handle;
   data.token = token;
-  if (useLabelsInput) {
-    data.useLabels = useLabels;
-  } else if (typeof stateOverride?.useLabels === 'boolean') {
-    data.useLabels = stateOverride.useLabels;
-  } else if (overrides.hasUseLabels) {
-    data.useLabels = prevUseLabels;
+  if (useBodyTextInput) {
+    data.useBodyText = useBodyText;
+  } else if (typeof stateOverride?.useBodyText === 'boolean') {
+    data.useBodyText = stateOverride.useBodyText;
+  } else if (overrides.hasUseBodyText) {
+    data.useBodyText = prevUseBodyText;
   } else {
-    data.useLabels = DEFAULTS.useLabels;
+    data.useBodyText = DEFAULTS.useBodyText;
   }
 
   const repoForInput = overrides.hasRepo ? stateOverride?.repo ?? prevRepo : repo;
@@ -133,13 +133,13 @@ export function saveSettings(inputs, overrides, stateOverride) {
   const handleForInput = overrides.hasHandle
     ? normalizeHandle(stateOverride?.handle ?? prevHandle, DEFAULTS.handle)
     : handle;
-  const useLabelsForInput = overrides.hasUseLabels
-    ? prevUseLabels
-    : typeof stateOverride?.useLabels === 'boolean'
-      ? stateOverride.useLabels
-      : useLabelsInput
-        ? !!useLabelsInput.checked
-        : useLabels;
+  const useBodyTextForInput = overrides.hasUseBodyText
+    ? prevUseBodyText
+    : typeof stateOverride?.useBodyText === 'boolean'
+      ? stateOverride.useBodyText
+      : useBodyTextInput
+        ? !!useBodyTextInput.checked
+        : useBodyText;
 
   repoInput.value = repoForInput;
   driInput.value = driForInput;
@@ -147,7 +147,7 @@ export function saveSettings(inputs, overrides, stateOverride) {
   coderLabelInput.value = coderLabelForInput;
   handleInput.value = handleForInput;
   tokenInput.value = token;
-  if (useLabelsInput) useLabelsInput.checked = !!useLabelsForInput;
+  if (useBodyTextInput) useBodyTextInput.checked = !!useBodyTextForInput;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   persistNotes();
 }
@@ -194,7 +194,7 @@ export function isCacheFresh(cache, ttl = CARDS_CACHE_TTL_MS) {
 }
 
 export function getState(inputs) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useLabelsInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useBodyTextInput } = inputs;
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
   const handle = handleInput.value || DEFAULTS.handle;
@@ -202,8 +202,8 @@ export function getState(inputs) {
   const handleBare = normalizedHandle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
-  const useLabels = useLabelsInput ? !!useLabelsInput.checked : DEFAULTS.useLabels;
-  return { repo, driToken, handle: normalizedHandle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+  const useBodyText = useBodyTextInput ? !!useBodyTextInput.checked : DEFAULTS.useBodyText;
+  return { repo, driToken, handle: normalizedHandle, handleBare, coderBodyFlag, coderLabelFlag, useBodyText };
 }
 
 export function makeFingerprint(state) {
