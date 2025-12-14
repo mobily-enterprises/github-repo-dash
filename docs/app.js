@@ -18,7 +18,8 @@ import {
   getCardCache,
   setCardCache,
   persistCardCache,
-  isCacheFresh
+  isCacheFresh,
+  getState as getStoredState
 } from './storage.js';
 import { renderNote, pruneNoteBindings } from './notes.js';
 import { rateLimit, fetchSearch, markFetched } from './network.js';
@@ -370,7 +371,7 @@ function init() {
   overrides = getQueryOverrides();
   loadSettings(inputs, overrides);
   config.forEach(makeCard);
-  const initialState = normalizeAppState(getState(inputs));
+  const initialState = normalizeAppState(getStoredState(inputs));
   initState(initialState);
   saveSettings(inputs, overrides, initialState);
   renderQueries();
