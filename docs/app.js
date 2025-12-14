@@ -30,6 +30,7 @@ const coderLabelInput = document.getElementById('coder-label-flag');
 const handleInput = document.getElementById('handle');
 const tokenInput = document.getElementById('token');
 const clearTokenBtn = document.getElementById('clear-token');
+const useLabelsInput = document.getElementById('use-labels');
 const loadButtons = {
   pulls: document.getElementById('load-pulls'),
   triage: document.getElementById('load-triage'),
@@ -86,14 +87,15 @@ function setStatus(section, text, state = '') {
 }
 
 function buildQuery(cfg, state) {
+  const replacement = state.useLabels ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
   const query = cfg.query
-    .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
+    .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
     .replace(/__HANDLE__/g, state.handle)
     .replace(/__HANDLE_BARE__/g, state.handleBare)
-    .replace(/__DRI__/g, state.driToken)
+    .replace(/__DRI__/g, replacement(state.driToken))
     .trim();
-  const repoClause = state.repo ? ` repo:${state.repo}` : '';
-  return query + repoClause;
+  if (!state.repo) return query;
+  return `repo:${state.repo} ${query}`;
 }
 
 function buildSearchUrl(state, cfg) {
@@ -360,16 +362,17 @@ const inputs = {
   coderBodyInput,
   coderLabelInput,
   handleInput,
-  tokenInput
+  tokenInput,
+  useLabelsInput
 };
 
 function init() {
   const overrides = getQueryOverrides();
   loadSettings(inputs, overrides);
   config.forEach(makeCard);
-  renderQueries();
-  renderTitle();
-  Object.keys(loadButtons).forEach(markSectionStale);
+      renderQueries();
+      renderTitle();
+      Object.keys(loadButtons).forEach(markSectionStale);
   hydrateCardsFromCache(getState(inputs));
 
   const persistAndRender = () => {
@@ -386,8 +389,13 @@ function init() {
     });
   }
 
-  [repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput].forEach((input) => {
-    if (input) input.addEventListener('input', persistAndRender);
+  [repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', () => {
+      persistAndRender();
+      // Reset cards/status since the query semantics changed.
+      ['issues', 'pulls', 'triage'].forEach(markSectionStale);
+    });
   });
 
   Object.entries(loadButtons).forEach(([section, btn]) => {

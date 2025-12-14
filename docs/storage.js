@@ -5,7 +5,7 @@ let notesStore = {};
 let cardCache = { fingerprint: '', cards: {} };
 
 export function loadSettings(inputs, overrides) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     if (saved.repo) repoInput.value = saved.repo;
@@ -14,6 +14,7 @@ export function loadSettings(inputs, overrides) {
     if (saved.coderLabelFlag) coderLabelInput.value = saved.coderLabelFlag;
     if (saved.handle) handleInput.value = normalizeHandle(saved.handle, DEFAULTS.handle);
     if (saved.token) tokenInput.value = saved.token;
+    if (typeof saved.useLabels === 'boolean' && useLabelsInput) useLabelsInput.checked = saved.useLabels;
   } catch (_) {
     // ignore malformed storage
   }
@@ -30,6 +31,7 @@ export function loadSettings(inputs, overrides) {
   if (!coderLabelInput.value) coderLabelInput.value = DEFAULTS.coderLabelFlag;
   if (!handleInput.value) handleInput.value = DEFAULTS.handle;
   if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
+  if (useLabelsInput) useLabelsInput.checked = typeof useLabelsInput.checked === 'boolean' ? useLabelsInput.checked : DEFAULTS.useLabels;
 
   repoInput.disabled = !!overrides.hasRepo;
   driInput.disabled = !!overrides.hasDri;
@@ -53,7 +55,7 @@ export function loadSettings(inputs, overrides) {
 }
 
 export function saveSettings(inputs, overrides) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
   let prev = {};
   try {
     prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
@@ -67,6 +69,7 @@ export function saveSettings(inputs, overrides) {
   if (!overrides.hasCoderLabelFlag) data.coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
   if (!overrides.hasHandle) data.handle = normalizeHandle(handleInput.value, DEFAULTS.handle);
   data.token = tokenInput.value.trim();
+  if (useLabelsInput) data.useLabels = !!useLabelsInput.checked;
 
   repoInput.value = data.repo || DEFAULTS.repo;
   driInput.value = data.dri || DEFAULTS.dri;
@@ -111,14 +114,15 @@ export function setCardCache(cache) {
 }
 
 export function getState(inputs) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useLabelsInput } = inputs;
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
   const handle = normalizeHandle(handleInput.value, DEFAULTS.handle);
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag };
+  const useLabels = useLabelsInput ? !!useLabelsInput.checked : DEFAULTS.useLabels;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
 }
 
 export function makeFingerprint(state) {
