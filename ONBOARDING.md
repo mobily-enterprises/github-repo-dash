@@ -53,15 +53,17 @@ The dashboard lives at `docs/index.html` and works the same on GitHub Pages.
 
 ## The startup sequence (what happens on load)
 
-The entry point is `docs/app.js`. On load it:
+The entry point is the `init()` function in `docs/app.js`. On load it:
 
 1) **Reads query param overrides** (repo, handle, flags) via `getQueryOverrides()` in `core.js`. These can lock inputs.
-2) **Loads saved settings** from localStorage into inputs via `loadSettings()` in `storage.js`.
+2) **Loads saved settings** from `localStorage` into the form inputs via `loadSettings()` in `storage.js` (under `STORAGE_KEY`).
 3) **Builds cards** from `config` (see below).
 4) **Initializes state** with `initState()` from `state.js` using normalized input values.
 5) **Saves settings** back to storage to ensure defaults are persisted.
 6) **Renders queries and title**, marks cards stale, and **hydrates from cache** if the fingerprint matches.
 7) **Hooks event listeners** for inputs, the DRI-source toggle, clear-token button, and load buttons.
+
+Settings retrieval happens in two places: `loadSettings` reads from `localStorage` to prefill/disable inputs, and `getState(inputs)` (used right after `loadSettings` inside `normalizeAppState`) re-reads those input values to derive the initial state snapshot that drives rendering and cache fingerprints.
 
 Key snippet (trimmed):
 
