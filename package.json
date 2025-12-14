@@ -1,7 +1,11 @@
 {
   "name": "github-repo-dash",
   "version": "1.0.0",
-  "description": "",
+  "description": "GitHub repository dashboard for projects with DRIs (Directly Responsible Individuals) ",
+  "keywords": [
+    "github",
+    "dashboard"
+  ],
   "homepage": "https://github.com/mobily-enterprises/github-repo-dash#readme",
   "bugs": {
     "url": "https://github.com/mobily-enterprises/github-repo-dash/issues"
@@ -11,9 +15,12 @@
     "url": "git+https://github.com/mobily-enterprises/github-repo-dash.git"
   },
   "license": "ISC",
-  "author": "",
+  "author": "Tony Mobily",
   "type": "commonjs",
   "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   }
