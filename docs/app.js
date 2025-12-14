@@ -22,7 +22,7 @@ import {
   getState as getStoredState
 } from './storage.js';
 import { renderNote, pruneNoteBindings } from './notes.js';
-import { rateLimit, fetchSearch, markFetched } from './network.js';
+import { rateLimit, fetchSearch, markFetched, fetchLabels } from './network.js';
 import { buildQuery, getQueryOverrides } from './core.js';
 import { initState, setState, getState as getStoreState } from './state.js';
 
@@ -35,7 +35,7 @@ const coderLabelInput = document.getElementById('coder-label-flag');
 const handleInput = document.getElementById('handle');
 const tokenInput = document.getElementById('token');
 const clearTokenBtn = document.getElementById('clear-token');
-const useBodyInput = document.getElementById('use-body');
+const useBodyTextInput = document.getElementById('use-body-text');
 const loadButtons = {
   pulls: document.getElementById('load-pulls'),
   triage: document.getElementById('load-triage'),
@@ -56,6 +56,9 @@ const grids = {
 // State holders
 const cards = new Map();
 let overrides = {};
+let driLabelsRepo = '';
+let driLabels = [];
+let driLabelsPromise = null;
 
 function normalizeAppState(next) {
   const repo = (next.repo || '').trim() || DEFAULTS.repo;
@@ -64,8 +67,41 @@ function normalizeAppState(next) {
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = (next.coderBodyFlag || '').trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = (next.coderLabelFlag || '').trim() || DEFAULTS.coderLabelFlag;
-  const useBody = typeof next.useBody === 'boolean' ? next.useBody : DEFAULTS.useBody;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBody };
+  const useBodyText = typeof next.useBodyText === 'boolean' ? next.useBodyText : DEFAULTS.useBodyText;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBodyText };
+}
+
+function filterDriLabelsForState(state) {
+  return driLabels.filter((name) => typeof name === 'string' && name.startsWith(state.driToken));
+}
+
+async function ensureDriLabels(repo, token) {
+  if (!isValidRepo(repo, REPO_REGEX)) {
+    driLabelsRepo = '';
+    driLabels = [];
+    driLabelsPromise = null;
+    return [];
+  }
+  if (repo === driLabelsRepo && driLabelsPromise) return driLabelsPromise;
+  if (repo === driLabelsRepo && !driLabelsPromise) return Promise.resolve(driLabels);
+
+  driLabelsRepo = repo;
+  const fetchPromise = fetchLabels(repo, token)
+    .then((names) => {
+      driLabels = names;
+      driLabelsPromise = Promise.resolve(names);
+      return names;
+    })
+    .catch((err) => {
+      if (repo === driLabelsRepo) {
+        driLabels = [];
+        driLabelsPromise = null;
+        driLabelsRepo = '';
+      }
+      throw err;
+    });
+  driLabelsPromise = fetchPromise;
+  return fetchPromise;
 }
 
 function setStatus(section, text, state = '') {
@@ -78,7 +114,9 @@ function setStatus(section, text, state = '') {
 function buildSearchUrl(state, cfg) {
   const path = cfg.section === 'issues' ? 'issues' : 'pulls';
   const repo = state.repo || DEFAULTS.repo;
-  return `https://github.com/${repo}/${path}?q=${encodeURIComponent(buildQuery(cfg, state))}`;
+  return `https://github.com/${repo}/${path}?q=${encodeURIComponent(
+    buildQuery(cfg, state, { driLabels: filterDriLabelsForState(state) })
+  )}`;
 }
 
 function addTopMetaLines(cardState, item, state, li) {
@@ -142,6 +180,11 @@ function applyStatePatch(patch, { persist = true, markStale = true } = {}) {
   const base = getStoreState() || {};
   const merged = typeof patch === 'function' ? patch(base) : { ...base, ...patch };
   const normalized = normalizeAppState(merged);
+  if (normalized.repo !== driLabelsRepo) {
+    driLabelsRepo = '';
+    driLabels = [];
+    driLabelsPromise = null;
+  }
   const nextState = setState(() => normalized);
   if (persist) saveSettings(inputs, overrides, nextState);
   renderQueries();
@@ -191,6 +234,8 @@ function makeCard(cfg) {
     const token = tokenInput.value.trim();
     setStatus(cfg.section, `Refreshing "${cfg.label}"…`);
     try {
+      await ensureDriLabels(state.repo, token);
+      renderQueries();
       await refreshCard(cardState, state, token);
       setStatus(cfg.section, 'Updated.', 'ok');
     } catch (err) {
@@ -201,13 +246,28 @@ function makeCard(cfg) {
 
 function renderQueries() {
   const state = getStoreState();
+  const token = tokenInput.value.trim();
+  if (!state.useBodyText && isValidRepo(state.repo, REPO_REGEX)) {
+    const needsLabels = state.repo !== driLabelsRepo || !driLabelsPromise;
+    if (needsLabels) {
+      const repoAtRequest = state.repo;
+      ensureDriLabels(state.repo, token)
+        .then(() => {
+          const latest = getStoreState();
+          if (latest?.repo === repoAtRequest && !latest.useBodyText) renderQueries();
+        })
+        .catch(() => {
+          /* hint stays as-is on label fetch failure */
+        });
+    }
+  }
   cards.forEach(({ cfg, searchLink, hint }) => {
     const validRepo = isValidRepo(state.repo, REPO_REGEX);
     if (!validRepo) {
       searchLink.href = '#';
       hint.textContent = 'Enter owner/repo to build query';
     } else {
-      const query = buildQuery(cfg, state);
+      const query = buildQuery(cfg, state, { driLabels: filterDriLabelsForState(state) });
       searchLink.href = buildSearchUrl(state, cfg);
       hint.textContent = query;
     }
@@ -294,7 +354,7 @@ async function refreshCard(cardState, state, token) {
     setListPlaceholder(cardState.list, 'Enter a repository (owner/repo) to load.', 'empty');
     return;
   }
-  const query = buildQuery(cardState.cfg, state);
+  const query = buildQuery(cardState.cfg, state, { driLabels: filterDriLabelsForState(state) });
   cardState.count.textContent = '…';
   setListPlaceholder(cardState.list, 'Loading…');
   cardState.card.classList.add('is-loading');
@@ -346,6 +406,13 @@ async function refreshSection(section) {
     });
     return;
   }
+  try {
+    await ensureDriLabels(state.repo, token);
+    renderQueries();
+  } catch (err) {
+    setStatus(section, err.message || 'Failed to load labels', 'error');
+    return;
+  }
   const delay = token ? SEARCH_DELAY_MS : NO_TOKEN_DELAY_MS;
   setStatus(section, `Refreshing ${sectionCards.length} searches…`);
   let errors = 0;
@@ -369,7 +436,7 @@ const inputs = {
   coderLabelInput,
   handleInput,
   tokenInput,
-  useBodyInput
+  useBodyTextInput
 };
 
 function init() {
@@ -425,9 +492,9 @@ function init() {
       applyStatePatch({ handle: handleInput.value || DEFAULTS.handle })
     );
   }
-  if (useBodyInput) {
-    useBodyInput.addEventListener('change', () =>
-      applyStatePatch({ useBody: !!useBodyInput.checked })
+  if (useBodyTextInput) {
+    useBodyTextInput.addEventListener('change', () =>
+      applyStatePatch({ useBodyText: !!useBodyTextInput.checked })
     );
   }
 

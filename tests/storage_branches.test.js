@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useBodyInput = document.createElement('input');
-  useBodyInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
+  const useBodyTextInput = document.createElement('input');
+  useBodyTextInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyTextInput };
 }
 
 beforeEach(() => {
@@ -26,23 +26,23 @@ describe('saveSettings handles bad prior storage', () => {
     expect(() => saveSettings(inputs, {})).not.toThrow();
   });
 
-  it('uses previous toggle when override locks useBody', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useBody: false }));
+  it('uses previous toggle when override locks useBodyText', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useBodyText: false }));
     const inputs = createInputs();
-    inputs.useBodyInput.checked = true;
-    saveSettings(inputs, { hasUseBody: true });
+    inputs.useBodyTextInput.checked = true;
+    saveSettings(inputs, { hasUseBodyText: true });
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    expect(saved.useBody).toBe(false);
-    expect(inputs.useBodyInput.checked).toBe(false);
+    expect(saved.useBodyText).toBe(false);
+    expect(inputs.useBodyTextInput.checked).toBe(false);
   });
 
   it('falls back to prior toggle when input missing and override locks it', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useBody: true }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useBodyText: true }));
     const inputs = createInputs();
-    delete inputs.useBodyInput;
-    saveSettings(inputs, { hasUseBody: true });
+    delete inputs.useBodyTextInput;
+    saveSettings(inputs, { hasUseBodyText: true });
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    expect(saved.useBody).toBe(true);
+    expect(saved.useBodyText).toBe(true);
   });
 
   it('keeps prior saved values when overrides lock everything and no state override', () => {
@@ -54,7 +54,7 @@ describe('saveSettings handles bad prior storage', () => {
         coderBodyFlag: 'prevBody',
         coderLabelFlag: 'prevLabel',
         handle: '@prev',
-        useBody: true
+        useBodyText: true
       })
     );
     const inputs = createInputs();
@@ -63,14 +63,14 @@ describe('saveSettings handles bad prior storage', () => {
     inputs.coderBodyInput.value = '';
     inputs.coderLabelInput.value = '';
     inputs.handleInput.value = '';
-    inputs.useBodyInput.checked = false;
+    inputs.useBodyTextInput.checked = false;
     const overrides = {
       hasRepo: true,
       hasDri: true,
       hasCoderBodyFlag: true,
       hasCoderLabelFlag: true,
       hasHandle: true,
-      hasUseBody: true
+      hasUseBodyText: true
     };
     saveSettings(inputs, overrides);
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -79,9 +79,9 @@ describe('saveSettings handles bad prior storage', () => {
     expect(saved.coderBodyFlag).toBe('prevBody');
     expect(saved.coderLabelFlag).toBe('prevLabel');
     expect(saved.handle).toBe('@prev');
-    expect(saved.useBody).toBe(true);
+    expect(saved.useBodyText).toBe(true);
     expect(inputs.repoInput.value).toBe('prev/repo');
-    expect(inputs.useBodyInput.checked).toBe(true);
+    expect(inputs.useBodyTextInput.checked).toBe(true);
   });
 });
 
@@ -96,11 +96,11 @@ describe('persistCardCache catches setItem errors', () => {
   });
 });
 
-describe('getState when useBodyInput missing', () => {
+describe('getState when useBodyTextInput missing', () => {
   it('falls back to defaults', () => {
     const inputs = createInputs();
-    delete inputs.useBodyInput;
+    delete inputs.useBodyTextInput;
     const state = getState(inputs);
-    expect(state.useBody).toBeDefined();
+    expect(state.useBodyText).toBeDefined();
   });
 });

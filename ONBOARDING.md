@@ -81,14 +81,16 @@ markAllSectionsStale();
 hydrateCardsFromCache(initialState);
 ```
 
-`normalizeAppState` ensures blank fields fall back to `DEFAULTS` (repo/handle/DRI token/coder flags/useBody).
+`normalizeAppState` ensures blank fields fall back to `DEFAULTS` (repo/handle/DRI token/coder flags/useBodyText).
 
 ## Card catalog (`docs/config.js`)
 
 Each card is declarative: `id`, `section` (issues/pulls/triage), label/title/desc, and a **query template**. Templates use tokens:
 
-- `__DRI_HANDLE__` → either `label:"DRI:@you"` or `in:body "DRI:@you"` depending on the “Look in body” toggle.
-- `__DRI__` → DRI token without a handle (same label/body switch).
+- `__DRI_HANDLE__` → `DRI:@you` (template decides label vs body).
+- `__DRI__` → DRI token without a handle (body templates only).
+- `__DRI_LABELS_OR__` → OR expression for all DRI labels (label templates only).
+- `__DRI_LABELS_NOT__` → multiple `NOT label:"..."` clauses for all DRI labels (label templates only).
 - `__HANDLE_BARE__` / `__HANDLE__` → your handle with/without `@`.
 
 Example:
@@ -98,7 +100,8 @@ Example:
   id: 'prs-dri-waiting',
   section: 'pulls',
   label: 'DRI waiting',
-  query: 'is:pr is:open __DRI_HANDLE__ -assignee:__HANDLE_BARE__'
+  queryUsingLabels: 'is:pr is:open label:"__DRI_HANDLE__" -assignee:__HANDLE_BARE__',
+  queryUsingBodyText: 'is:pr is:open in:body "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
 }
 ```
 
@@ -111,27 +114,36 @@ Defaults and constants (timeouts, storage keys, regex) also live here.
 
 ## Query building (`docs/core.js`)
 
-`buildQuery(cfg, state)` replaces tokens based on the **source of DRI data**:
+`buildQuery(cfg, state)` picks the right template for the DRI source and swaps tokens:
 
 ```js
-const replacement = state.useBody
-  ? (token) => `in:body "${token}"`   // when “Look in body” is ON
-  : (token) => `label:"${token}"`;    // default: labels
+const template =
+  (state.useBodyText && cfg.queryUsingBodyText) ||
+  (!state.useBodyText && cfg.queryUsingLabels) ||
+  (state.useBodyText ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
+  '';
 
-const query = cfg.query
-  .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
+const driLabelsOr = driLabels.length === 1
+  ? `label:"${driLabels[0]}"`
+  : `(${driLabels.map((l) => `label:"${l}"`).join(' OR ')})`;
+
+const query = template
+  .replace(/__DRI_LABELS_OR__/g, driLabelsOr)
+  .replace(/__DRI_LABELS_NOT__/g, driLabels.map((l) => `NOT label:"${l}"`).join(' '))
+  .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
   .replace(/__HANDLE__/g, state.handle)
   .replace(/__HANDLE_BARE__/g, state.handleBare)
-  .replace(/__DRI__/g, replacement(state.driToken));
+  .replace(/__DRI__/g, state.driToken)
+  .trim();
 
-return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
+return state.repo ? `repo:${state.repo} ${query}` : query;
 ```
 
-`getQueryOverrides()` reads `?repo=...&handle=@you&use_body=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseBody`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
+`getQueryOverrides()` reads `?repo=...&handle=@you&use_body_text=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseBodyText`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
 
 ## State store (`docs/state.js`)
 
-This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useBody) and notifies listeners when it changes.
+This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useBodyText) and notifies listeners when it changes.
 
 API:
 
@@ -202,15 +214,15 @@ Example: pulling a state snapshot from inputs (used at init):
 
 ```js
 export function getState(inputs) {
-  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useBodyInput } = inputs;
+  const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useBodyTextInput } = inputs;
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
   const handle = normalizeHandle(handleInput.value || DEFAULTS.handle, DEFAULTS.handle);
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
-  const useBody = useBodyInput ? !!useBodyInput.checked : DEFAULTS.useBody;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBody };
+  const useBodyText = useBodyTextInput ? !!useBodyTextInput.checked : DEFAULTS.useBodyText;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useBodyText };
 }
 ```
 
@@ -306,7 +318,7 @@ The “clear token” button empties the token field and triggers the same flow.
 ### Toggle: “Look in body for DRI:@… and coder flags (off = labels)”
 
 - When changed, state updates and **all cards are marked stale** because queries change.
-- Persisted in localStorage; can also be forced via `?use_body=true|false`.
+- Persisted in localStorage; can also be forced via `?use_body_text=true|false`.
 - When ON, DRI tokens are searched in `in:body`; when OFF (default), in labels.
 
 ## Notes subsystem (`docs/notes.js`)
@@ -371,7 +383,7 @@ Edit `DEFAULTS` in `config.js` (e.g., change `coderBodyFlag` or `coderLabelFlag`
 - `&handle=@you` — prefill/lock handle.
 - `&dri_token=DRI:@` — override token prefix.
 - `&coder_body_flag=coder` / `&coder_label_flag=DRI_is_coder` — override flags.
-- `&use_body=true|false` — toggle body vs labels (true = look in body; false = labels).
+- `&use_body_text=true|false` — toggle body vs labels (true = look in body; false = labels).
 
 Locked fields are disabled in the UI; saved settings will not override them.
 

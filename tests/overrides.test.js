@@ -10,7 +10,7 @@ const baseState = {
   handleBare: 'jane',
   coderBodyFlag: DEFAULTS.coderBodyFlag,
   coderLabelFlag: DEFAULTS.coderLabelFlag,
-  useBody: false
+  useBodyText: false
 };
 
 beforeEach(() => {
@@ -22,31 +22,38 @@ describe('getQueryOverrides', () => {
     const o = getQueryOverrides();
     expect(o.repo).toBe('');
     expect(o.hasRepo).toBe(false);
-    expect(o.hasUseBody).toBe(false);
+    expect(o.hasUseBodyText).toBe(false);
   });
 
-  it('parses handle and use_body=true', () => {
-    window.history.replaceState({}, '', '/?handle=bob&use_body=true');
+  it('parses handle and use_body_text=true', () => {
+    window.history.replaceState({}, '', '/?handle=bob&use_body_text=true');
     const o = getQueryOverrides();
     expect(o.handle).toBe('@bob');
     expect(o.hasHandle).toBe(true);
-    expect(o.useBody).toBe(true);
-    expect(o.hasUseBody).toBe(true);
+    expect(o.useBodyText).toBe(true);
+    expect(o.hasUseBodyText).toBe(true);
   });
 
-  it('parses use_body=false', () => {
-    window.history.replaceState({}, '', '/?use_body=false');
+  it('parses use_body_text=false', () => {
+    window.history.replaceState({}, '', '/?use_body_text=false');
     const o = getQueryOverrides();
-    expect(o.useBody).toBe(false);
-    expect(o.hasUseBody).toBe(true);
+    expect(o.useBodyText).toBe(false);
+    expect(o.hasUseBodyText).toBe(true);
   });
 });
 
 describe('buildQuery with DRI handle replacement', () => {
   it('replaces __DRI_HANDLE__ correctly', () => {
-    const cfg = { query: 'is:pr __DRI_HANDLE__ -assignee:__HANDLE_BARE__' };
-    const q = buildQuery(cfg, baseState);
-    expect(q).toContain('label:"DRI:@jane"');
-    expect(q).toContain('assignee:jane');
+    const cfg = {
+      queryUsingLabels: 'is:pr label:"__DRI_HANDLE__" -assignee:__HANDLE_BARE__',
+      queryUsingBodyText: 'is:pr in:body "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
+    };
+    const labelQuery = buildQuery(cfg, baseState);
+    expect(labelQuery).toContain('label:"DRI:@jane"');
+    expect(labelQuery).toContain('assignee:jane');
+
+    const bodyQuery = buildQuery(cfg, { ...baseState, useBodyText: true });
+    expect(bodyQuery).toContain('in:body "DRI:@jane"');
+    expect(bodyQuery).toContain('assignee:jane');
   });
 });

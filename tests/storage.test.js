@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useBodyInput = document.createElement('input');
-  useBodyInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
+  const useBodyTextInput = document.createElement('input');
+  useBodyTextInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyTextInput };
 }
 
 beforeEach(() => {
@@ -21,11 +21,11 @@ beforeEach(() => {
 });
 
 describe('storage load/save', () => {
-  it('saves and loads settings including useBody', () => {
+  it('saves and loads settings including useBodyText', () => {
     const inputs = createInputs();
     inputs.repoInput.value = 'owner/repo';
     inputs.handleInput.value = '@me';
-    inputs.useBodyInput.checked = true;
+    inputs.useBodyTextInput.checked = true;
 
     saveSettings(inputs, {});
 
@@ -34,24 +34,24 @@ describe('storage load/save', () => {
 
     expect(fresh.repoInput.value).toBe('owner/repo');
     expect(fresh.handleInput.value).toBe('@me');
-    expect(fresh.useBodyInput.checked).toBe(true);
+    expect(fresh.useBodyTextInput.checked).toBe(true);
   });
 
-  it('respects use_body override and disables input', () => {
+  it('respects use_body_text override and disables input', () => {
     const inputs = createInputs();
-    const overrides = { hasUseBody: true, useBody: false };
+    const overrides = { hasUseBodyText: true, useBodyText: false };
     loadSettings(inputs, overrides);
-    expect(inputs.useBodyInput.checked).toBe(false);
-    expect(inputs.useBodyInput.disabled).toBe(true);
+    expect(inputs.useBodyTextInput.checked).toBe(false);
+    expect(inputs.useBodyTextInput.disabled).toBe(true);
   });
 });
 
 describe('getState', () => {
-  it('includes useBody flag', () => {
+  it('includes useBodyText flag', () => {
     const inputs = createInputs();
-    inputs.useBodyInput.checked = false;
+    inputs.useBodyTextInput.checked = false;
     const state = getState(inputs);
-    expect(state.useBody).toBe(false);
+    expect(state.useBodyText).toBe(false);
     expect(state.driToken).toBe(DEFAULTS.dri);
   });
 });

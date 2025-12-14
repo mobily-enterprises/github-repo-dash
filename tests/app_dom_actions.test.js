@@ -33,12 +33,14 @@ const mockFetchSearch = vi.fn(async () =>
     }
   ])
 );
+const mockFetchLabels = vi.fn().mockResolvedValue(['DRI:@alice', 'DRI:@bob']);
 
 vi.mock('../docs/network.js', async () => {
   const actual = await vi.importActual('../docs/network.js');
   return {
     ...actual,
     fetchSearch: mockFetchSearch,
+    fetchLabels: mockFetchLabels,
     rateLimit: vi.fn(),
     markFetched: vi.fn()
   };
@@ -86,6 +88,7 @@ describe('app wiring actions', () => {
     loadPulls.click();
     await flush();
     expect(mockFetchSearch).toHaveBeenCalled();
+    expect(mockFetchLabels).toHaveBeenCalledWith('owner/repo', '');
     const pullsStatus = document.getElementById('status-pulls');
     expect(pullsStatus.textContent).toBe('Updated.');
     // ensure the pulls grid has cards (config filtered by section)
@@ -96,15 +99,26 @@ describe('app wiring actions', () => {
     expect(pullsCards.length).toBe(pullsConfigCount);
   });
 
-  it('switching use-body marks sections stale and rebuilds queries', async () => {
+  it('switching use-body-text marks sections stale and rebuilds queries', async () => {
     const statusBefore = document.getElementById('status-issues').textContent;
     expect(statusBefore).toBe('Not loaded');
-    const toggle = document.getElementById('use-body');
+    const toggle = document.getElementById('use-body-text');
     toggle.checked = true;
     toggle.dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
     expect(document.getElementById('status-issues').textContent).toBe('Not loaded');
     expect(document.getElementById('status-pulls').textContent).toBe('Not loaded');
+  });
+
+  it('reload button fetches labels before refreshing card', async () => {
+    const loadPulls = document.getElementById('load-pulls');
+    loadPulls.click();
+    await flush();
+    mockFetchLabels.mockClear();
+    const firstReload = document.querySelector('.card .mini-btn');
+    firstReload.click();
+    await flush();
+    expect(mockFetchLabels).toHaveBeenCalledTimes(0);
   });
 
   it('shows repo error when repo is invalid', async () => {
