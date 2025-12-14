@@ -3,15 +3,20 @@ import { normalizeHandle, isValidRepo } from './utils.js';
 
 // Build GitHub search query from config template and current state.
 export function buildQuery(cfg, state) {
-  // useBodyText flag means "search body instead of labels" (name is historical)
   const useBodySource = !!state.useBodyText;
-  const replacement = useBodySource ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
-  const query = cfg.query
-    .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
+  const template =
+    (useBodySource && cfg.queryUsingBodyText) ||
+    (!useBodySource && cfg.queryUsingLabels) ||
+    (useBodySource ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
+    '';
+
+  const query = template
+    .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
     .replace(/__HANDLE__/g, state.handle)
     .replace(/__HANDLE_BARE__/g, state.handleBare)
-    .replace(/__DRI__/g, replacement(state.driToken))
+    .replace(/__DRI__/g, state.driToken)
     .trim();
+
   if (!state.repo) return query;
   return `repo:${state.repo} ${query}`;
 }

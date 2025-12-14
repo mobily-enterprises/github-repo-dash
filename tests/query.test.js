@@ -13,7 +13,10 @@ const baseState = {
   useBodyText: false
 };
 
-const cfg = { query: 'is:pr __DRI__ assignee:__HANDLE_BARE__' };
+const cfg = {
+  queryUsingLabels: 'is:pr label:"__DRI__" assignee:__HANDLE_BARE__',
+  queryUsingBodyText: 'is:pr in:body "__DRI__" assignee:__HANDLE_BARE__'
+};
 
 describe('buildQuery', () => {
   it('prefixes repo and uses labels by default', () => {

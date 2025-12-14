@@ -44,7 +44,10 @@ describe('core coverage bumps', () => {
   });
 
   it('builds in-body query when repo is empty and useBodyText is on', () => {
-    const cfg = { query: '__DRI__ __DRI_HANDLE__ __HANDLE__ __HANDLE_BARE__' };
+    const cfg = {
+      queryUsingLabels: 'label:"__DRI__" label:"__DRI_HANDLE__" __HANDLE__ __HANDLE_BARE__',
+      queryUsingBodyText: 'in:body "__DRI__" in:body "__DRI_HANDLE__" __HANDLE__ __HANDLE_BARE__'
+    };
     const state = {
       repo: '',
       driToken: 'DRI:@',

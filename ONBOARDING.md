@@ -87,8 +87,8 @@ hydrateCardsFromCache(initialState);
 
 Each card is declarative: `id`, `section` (issues/pulls/triage), label/title/desc, and a **query template**. Templates use tokens:
 
-- `__DRI_HANDLE__` → either `label:"DRI:@you"` or `in:body "DRI:@you"` depending on the “Look in body” toggle.
-- `__DRI__` → DRI token without a handle (same label/body switch).
+- `__DRI_HANDLE__` → `DRI:@you` (templates handle whether this lives in a label or body).
+- `__DRI__` → DRI token without a handle (again, template decides label vs body).
 - `__HANDLE_BARE__` / `__HANDLE__` → your handle with/without `@`.
 
 Example:
@@ -98,7 +98,8 @@ Example:
   id: 'prs-dri-waiting',
   section: 'pulls',
   label: 'DRI waiting',
-  query: 'is:pr is:open __DRI_HANDLE__ -assignee:__HANDLE_BARE__'
+  queryUsingLabels: 'is:pr is:open label:"__DRI_HANDLE__" -assignee:__HANDLE_BARE__',
+  queryUsingBodyText: 'is:pr is:open in:body "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
 }
 ```
 
@@ -111,20 +112,23 @@ Defaults and constants (timeouts, storage keys, regex) also live here.
 
 ## Query building (`docs/core.js`)
 
-`buildQuery(cfg, state)` replaces tokens based on the **source of DRI data**:
+`buildQuery(cfg, state)` picks the right template for the DRI source and swaps tokens:
 
 ```js
-const replacement = state.useBodyText
-  ? (token) => `in:body "${token}"`   // when “Look in body” is ON
-  : (token) => `label:"${token}"`;    // default: labels
+const template =
+  (state.useBodyText && cfg.queryUsingBodyText) ||
+  (!state.useBodyText && cfg.queryUsingLabels) ||
+  (state.useBodyText ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
+  '';
 
-const query = cfg.query
-  .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
+const query = template
+  .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
   .replace(/__HANDLE__/g, state.handle)
   .replace(/__HANDLE_BARE__/g, state.handleBare)
-  .replace(/__DRI__/g, replacement(state.driToken));
+  .replace(/__DRI__/g, state.driToken)
+  .trim();
 
-return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
+return state.repo ? `repo:${state.repo} ${query}` : query;
 ```
 
 `getQueryOverrides()` reads `?repo=...&handle=@you&use_body_text=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseBodyText`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.

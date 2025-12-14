@@ -44,9 +44,16 @@ describe('getQueryOverrides', () => {
 
 describe('buildQuery with DRI handle replacement', () => {
   it('replaces __DRI_HANDLE__ correctly', () => {
-    const cfg = { query: 'is:pr __DRI_HANDLE__ -assignee:__HANDLE_BARE__' };
-    const q = buildQuery(cfg, baseState);
-    expect(q).toContain('label:"DRI:@jane"');
-    expect(q).toContain('assignee:jane');
+    const cfg = {
+      queryUsingLabels: 'is:pr label:"__DRI_HANDLE__" -assignee:__HANDLE_BARE__',
+      queryUsingBodyText: 'is:pr in:body "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
+    };
+    const labelQuery = buildQuery(cfg, baseState);
+    expect(labelQuery).toContain('label:"DRI:@jane"');
+    expect(labelQuery).toContain('assignee:jane');
+
+    const bodyQuery = buildQuery(cfg, { ...baseState, useBodyText: true });
+    expect(bodyQuery).toContain('in:body "DRI:@jane"');
+    expect(bodyQuery).toContain('assignee:jane');
   });
 });
