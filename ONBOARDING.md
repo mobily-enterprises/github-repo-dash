@@ -131,14 +131,60 @@ return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
 
 ## State store (`docs/state.js`)
 
-A minimal observable store:
+This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useLabels) and notifies listeners when it changes.
 
-- `initState(initial)` sets the first snapshot.
-- `setState(patch)` merges or accepts a function, updates `currentState`, and notifies listeners.
-- `getState()` returns the snapshot.
-- `subscribe(fn)` lets you react to changes; returns an unsubscribe.
+API:
 
-`app.js` uses this to keep normalized app state in sync with inputs and to re-render query hints/title.
+- `initState(initial)` — seeds the store. Called once on startup.
+- `setState(patch)` — updates the store. `patch` can be an object or a function `(prev) => next`. Returns the new state and notifies subscribers.
+- `getState()` — returns the current snapshot.
+- `subscribe(fn)` — registers a listener, returns an `unsubscribe` function.
+- `resetState()` — clears the snapshot and listeners (used in tests).
+
+Why it’s structured this way:
+
+- We keep the inputs as the source of truth for user edits, but we also keep a normalized snapshot (handle prefixed with `@`, defaults applied) so that rendering and caching can be consistent.
+- Listeners let you react to state changes without threading callbacks through every function.
+
+Common usage in `app.js`:
+
+```js
+const initialState = normalizeAppState(getStoredState(inputs));
+initState(initialState);
+
+// Later, when an input changes:
+applyStatePatch({ handle: handleInput.value || DEFAULTS.handle });
+```
+
+`applyStatePatch` (in `app.js`) is a convenience wrapper around `setState`:
+
+```js
+function applyStatePatch(patch, { persist = true, markStale = true } = {}) {
+  const base = getStoreState() || {};
+  const merged = typeof patch === 'function' ? patch(base) : { ...base, ...patch };
+  const normalized = normalizeAppState(merged);
+  const nextState = setState(() => normalized); // <- state.js
+  if (persist) saveSettings(inputs, overrides, nextState);
+  renderQueries();
+  renderTitle();
+  if (markStale) markAllSectionsStale();
+  return nextState;
+}
+```
+
+Takeaways from this pattern:
+
+- **Normalize on every update**: All state writes go through `normalizeAppState`, so handles stay prefixed, defaults stay applied, and caches fingerprint correctly.
+- **Reacting to changes**: You can `subscribe` if you add new UI that must react to state changes, but today `app.js` calls render functions directly after `setState`.
+- **Testing**: Use `resetState()` in tests to isolate cases; you can seed with `initState` and then call `setState` to simulate user changes.
+
+If you add new state fields:
+
+1) Extend `DEFAULTS` in `config.js`.
+2) Update `storage` load/save/getState.
+3) Update `normalizeAppState` in `app.js`.
+4) Ensure `makeFingerprint` (storage) includes it if caches should invalidate.
+5) Use `applyStatePatch` (or `setState`) to keep normalization and persistence intact.
 
 ## Settings, notes, and cache (`docs/storage.js`)
 
