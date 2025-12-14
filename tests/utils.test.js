@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { normalizeHandle, isValidRepo } from '../docs/utils.js';
 import { REPO_REGEX } from '../docs/config.js';
 

@@ -100,3 +100,11 @@ Locked fields become disabled in the UI.
 
 - Tokens are stored in localStorage for convenience; use the inline clear control to remove them.
 - The page fetches from the GitHub API directly and applies a strict Content Security Policy; no backend is required. Serve via a local server (e.g., `npm run serve`); `file://` won’t work with module imports.
+
+## Development
+
+- Install deps: `npm install`
+- Serve locally: `npm run serve`
+- Tests (with coverage gate): `npm test` or `npx vitest run --coverage`
+- Lint/format: `npm run lint` / `npm run format`
+- Types (JS with TS checking): `npm run typecheck`

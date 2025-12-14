@@ -5,6 +5,7 @@ import {
   TOP_META_ASSIGNEE_IDS,
   DEFAULTS,
   SEARCH_DELAY_MS,
+  NO_TOKEN_DELAY_MS,
   REPO_REGEX
 } from './config.js';
 import { sleep, createEl, setListPlaceholder, isValidRepo } from './utils.js';

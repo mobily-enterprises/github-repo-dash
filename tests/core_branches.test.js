@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { getQueryOverrides } from '../docs/core.js';
 
 beforeEach(() => {
