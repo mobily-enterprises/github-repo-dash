@@ -19,9 +19,11 @@ describe('state store', () => {
     resetState();
     const inputs = makeInputs();
     inputs.repoInput.value = 'owner/repo';
+    inputs.handleInput.value = 'alice';
     const state = initState(inputs);
     expect(state.repo).toBe('owner/repo');
     expect(getState().repo).toBe('owner/repo');
+    expect(state.handle).toBe('@alice');
   });
 
   it('updates state and notifies subscribers', () => {

@@ -137,12 +137,12 @@ export function getState(inputs) {
   const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, useLabelsInput } = inputs;
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
-  const handle = normalizeHandle(handleInput.value, DEFAULTS.handle);
+  const handle = handleInput.value || DEFAULTS.handle;
   const handleBare = handle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
   const useLabels = useLabelsInput ? !!useLabelsInput.checked : DEFAULTS.useLabels;
-  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+  return { repo, driToken, handle: normalizeHandle(handle, DEFAULTS.handle), handleBare, coderBodyFlag, coderLabelFlag, useLabels };
 }
 
 export function makeFingerprint(state) {
