@@ -127,7 +127,7 @@ const query = cfg.query
 return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
 ```
 
-`getQueryOverrides()` reads `?repo=...&handle=@you&use_labels=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL.
+`getQueryOverrides()` reads `?repo=...&handle=@you&use_labels=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseLabels`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
 
 ## State store (`docs/state.js`)
 
