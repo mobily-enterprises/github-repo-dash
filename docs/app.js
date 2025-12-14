@@ -6,6 +6,7 @@ import {
   DEFAULTS,
   SEARCH_DELAY_MS,
   NO_TOKEN_DELAY_MS,
+  CARDS_CACHE_TTL_MS,
   REPO_REGEX
 } from './config.js';
 import { sleep, createEl, setListPlaceholder, isValidRepo } from './utils.js';
@@ -17,7 +18,8 @@ import {
   makeFingerprint,
   getCardCache,
   setCardCache,
-  persistCardCache
+  persistCardCache,
+  isCacheFresh
 } from './storage.js';
 import { renderNote, pruneNoteBindings } from './notes.js';
 import { rateLimit, fetchSearch, markFetched } from './network.js';
@@ -189,6 +191,13 @@ function renderTitle() {
 function hydrateCardsFromCache(state) {
   const cache = getCardCache();
   if (!cache?.fingerprint || cache.fingerprint !== makeFingerprint(state)) return;
+  if (!isCacheFresh(cache, CARDS_CACHE_TTL_MS)) {
+    Object.keys(statusEls).forEach((section) => {
+      setStatus(section, 'Cache expired; please reload.', 'warn');
+      markSectionStale(section);
+    });
+    return;
+  }
   const sectionHasCache = new Set();
   Object.entries(cache.cards || {}).forEach(([id, payload]) => {
     const cardState = cards.get(id);
@@ -199,7 +208,7 @@ function hydrateCardsFromCache(state) {
     renderItems(cardState, items, state);
     sectionHasCache.add(cardState.cfg.section);
   });
-  sectionHasCache.forEach((section) => setStatus(section, 'Loaded from cache'));
+  sectionHasCache.forEach((section) => setStatus(section, 'Loaded from cache (fresh)', 'ok'));
 }
 
 function renderItems(cardState, items, state) {
@@ -263,9 +272,10 @@ async function refreshCard(cardState, state, token) {
     const data = await fetchSearch(query, token);
     cardState.count.textContent = data.total_count?.toLocaleString?.() || data.total_count || '0';
     renderItems(cardState, data.items || [], state);
-    const cache = getCardCache() || { fingerprint: '', cards: {} };
+    const cache = getCardCache() || { fingerprint: '', cards: {}, cachedAt: 0 };
     const nextCache = {
       fingerprint: makeFingerprint(state),
+      cachedAt: Date.now(),
       cards: {
         ...(cache.cards || {}),
         [cardState.cfg.id]: {
