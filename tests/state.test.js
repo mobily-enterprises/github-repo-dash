@@ -1,46 +1,45 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { initState, updateState, getState, subscribe, resetState } from '../docs/state.js';
-
-function makeInputs() {
-  const repoInput = document.createElement('input');
-  const driInput = document.createElement('input');
-  const coderBodyInput = document.createElement('input');
-  const coderLabelInput = document.createElement('input');
-  const handleInput = document.createElement('input');
-  const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
-}
+import { initState, updateState, getState, subscribe, resetState, setState } from '../docs/state.js';
 
 describe('state store', () => {
   it('initializes and returns state snapshot', () => {
     resetState();
-    const inputs = makeInputs();
-    inputs.repoInput.value = 'owner/repo';
-    inputs.handleInput.value = 'alice';
-    const state = initState(inputs);
+    const initial = { repo: 'owner/repo', handle: '@alice', driToken: 'dri' };
+    const state = initState(initial);
     expect(state.repo).toBe('owner/repo');
-    expect(getState().repo).toBe('owner/repo');
-    expect(state.handle).toBe('@alice');
+    expect(getState().handle).toBe('@alice');
+    expect(state.driToken).toBe('dri');
   });
 
   it('updates state and notifies subscribers', () => {
     resetState();
-    const inputs = makeInputs();
     const spy = vi.fn();
     const unsubscribe = subscribe(spy);
-    inputs.repoInput.value = 'a/b';
-    updateState(inputs);
-    expect(spy).toHaveBeenCalled();
-    inputs.repoInput.value = 'c/d';
-    const newState = updateState(inputs);
+    initState({ repo: 'a/b', handle: '@me' });
+    const newState = setState((prev) => ({ ...prev, repo: 'c/d' }));
     expect(newState.repo).toBe('c/d');
-    unsubscribe();
-    inputs.repoInput.value = 'e/f';
-    updateState(inputs);
+    expect(spy).toHaveBeenCalledWith(newState);
+    const merged = updateState({ handle: '@bob' });
+    expect(merged.handle).toBe('@bob');
     expect(spy).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    setState({ repo: 'e/f' });
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  it('supports setting state before init and merges from empty', () => {
+    resetState();
+    const next = setState({ repo: 'cold/start' });
+    expect(next.repo).toBe('cold/start');
+    expect(getState().repo).toBe('cold/start');
+  });
+
+  it('applies functional updater on cold start', () => {
+    resetState();
+    const next = setState((prev) => ({ ...prev, repo: 'from-fn' }));
+    expect(next.repo).toBe('from-fn');
+    expect(getState().repo).toBe('from-fn');
   });
 
   it('getState returns null before init', () => {

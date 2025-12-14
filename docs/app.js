@@ -9,7 +9,7 @@ import {
   CARDS_CACHE_TTL_MS,
   REPO_REGEX
 } from './config.js';
-import { sleep, createEl, setListPlaceholder, isValidRepo } from './utils.js';
+import { sleep, createEl, setListPlaceholder, isValidRepo, normalizeHandle } from './utils.js';
 import { extractDri, formatDri, extractAssignee, formatAssignee } from './dri.js';
 import {
   loadSettings,
@@ -23,7 +23,7 @@ import {
 import { renderNote, pruneNoteBindings } from './notes.js';
 import { rateLimit, fetchSearch, markFetched } from './network.js';
 import { buildQuery, getQueryOverrides } from './core.js';
-import { initState, updateState, getState as getStoreState } from './state.js';
+import { initState, setState, getState as getStoreState } from './state.js';
 
 // DOM references
 const repoTitle = document.getElementById('repo-title');
@@ -54,6 +54,18 @@ const grids = {
 
 // State holders
 const cards = new Map();
+let overrides = {};
+
+function normalizeAppState(next) {
+  const repo = (next.repo || '').trim() || DEFAULTS.repo;
+  const driToken = (next.driToken || '').trim() || DEFAULTS.dri;
+  const handle = normalizeHandle(next.handle ?? DEFAULTS.handle, DEFAULTS.handle);
+  const handleBare = handle.replace(/^@+/, '');
+  const coderBodyFlag = (next.coderBodyFlag || '').trim() || DEFAULTS.coderBodyFlag;
+  const coderLabelFlag = (next.coderLabelFlag || '').trim() || DEFAULTS.coderLabelFlag;
+  const useLabels = typeof next.useLabels === 'boolean' ? next.useLabels : DEFAULTS.useLabels;
+  return { repo, driToken, handle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+}
 
 function setStatus(section, text, state = '') {
   const el = statusEls[section];
@@ -121,6 +133,22 @@ function markSectionStale(section) {
   });
 }
 
+function markAllSectionsStale() {
+  Object.keys(loadButtons).forEach(markSectionStale);
+}
+
+function applyStatePatch(patch, { persist = true, markStale = true } = {}) {
+  const base = getStoreState() || {};
+  const merged = typeof patch === 'function' ? patch(base) : { ...base, ...patch };
+  const normalized = normalizeAppState(merged);
+  const nextState = setState(() => normalized);
+  if (persist) saveSettings(inputs, overrides, nextState);
+  renderQueries();
+  renderTitle();
+  if (markStale) markAllSectionsStale();
+  return nextState;
+}
+
 function makeCard(cfg) {
   const card = createEl('article', 'card');
   if (cfg.tone) card.dataset.tone = cfg.tone;
@@ -184,7 +212,7 @@ function renderQueries() {
 
 function renderTitle() {
   if (!repoTitle) return;
-  const title = repoInput.value.trim();
+  const title = (getStoreState()?.repo || '').trim();
   repoTitle.textContent = title || 'Repository triage snapshot';
 }
 
@@ -343,38 +371,63 @@ const inputs = {
 };
 
 function init() {
-  const overrides = getQueryOverrides();
+  overrides = getQueryOverrides();
   loadSettings(inputs, overrides);
   config.forEach(makeCard);
-  initState(inputs);
+  const initialState = normalizeAppState(getState(inputs));
+  initState(initialState);
+  saveSettings(inputs, overrides, initialState);
   renderQueries();
   renderTitle();
-  Object.keys(loadButtons).forEach(markSectionStale);
-  hydrateCardsFromCache(getStoreState());
+  markAllSectionsStale();
+  hydrateCardsFromCache(initialState);
 
-  const persistAndRender = () => {
-    saveSettings(inputs, overrides);
-    updateState(inputs);
+  const handleTokenChange = () => {
+    saveSettings(inputs, overrides, getStoreState());
     renderQueries();
     renderTitle();
-    Object.keys(loadButtons).forEach(markSectionStale);
+    markAllSectionsStale();
   };
 
   if (clearTokenBtn) {
     clearTokenBtn.addEventListener('click', () => {
       tokenInput.value = '';
-      persistAndRender();
+      handleTokenChange();
     });
   }
 
-  [repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput].forEach((input) => {
-    if (!input) return;
-    input.addEventListener('input', () => {
-      persistAndRender();
-      // Reset cards/status since the query semantics changed.
-      ['issues', 'pulls', 'triage'].forEach(markSectionStale);
-    });
-  });
+  if (tokenInput) tokenInput.addEventListener('input', handleTokenChange);
+
+  if (repoInput) {
+    repoInput.addEventListener('input', () =>
+      applyStatePatch({ repo: repoInput.value.trim() || DEFAULTS.repo })
+    );
+  }
+  if (driInput) {
+    driInput.addEventListener('input', () =>
+      applyStatePatch({ driToken: driInput.value.trim() || DEFAULTS.dri })
+    );
+  }
+  if (coderBodyInput) {
+    coderBodyInput.addEventListener('input', () =>
+      applyStatePatch({ coderBodyFlag: coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag })
+    );
+  }
+  if (coderLabelInput) {
+    coderLabelInput.addEventListener('input', () =>
+      applyStatePatch({ coderLabelFlag: coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag })
+    );
+  }
+  if (handleInput) {
+    handleInput.addEventListener('input', () =>
+      applyStatePatch({ handle: handleInput.value || DEFAULTS.handle })
+    );
+  }
+  if (useLabelsInput) {
+    useLabelsInput.addEventListener('change', () =>
+      applyStatePatch({ useLabels: !!useLabelsInput.checked })
+    );
+  }
 
   Object.entries(loadButtons).forEach(([section, btn]) => {
     if (btn) btn.addEventListener('click', () => refreshSection(section));

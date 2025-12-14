@@ -25,6 +25,64 @@ describe('saveSettings handles bad prior storage', () => {
     const inputs = createInputs();
     expect(() => saveSettings(inputs, {})).not.toThrow();
   });
+
+  it('uses previous toggle when override locks useLabels', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useLabels: false }));
+    const inputs = createInputs();
+    inputs.useLabelsInput.checked = true;
+    saveSettings(inputs, { hasUseLabels: true });
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    expect(saved.useLabels).toBe(false);
+    expect(inputs.useLabelsInput.checked).toBe(false);
+  });
+
+  it('falls back to prior toggle when input missing and override locks it', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ useLabels: true }));
+    const inputs = createInputs();
+    delete inputs.useLabelsInput;
+    saveSettings(inputs, { hasUseLabels: true });
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    expect(saved.useLabels).toBe(true);
+  });
+
+  it('keeps prior saved values when overrides lock everything and no state override', () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        repo: 'prev/repo',
+        dri: 'DRI:@prev',
+        coderBodyFlag: 'prevBody',
+        coderLabelFlag: 'prevLabel',
+        handle: '@prev',
+        useLabels: true
+      })
+    );
+    const inputs = createInputs();
+    inputs.repoInput.value = '';
+    inputs.driInput.value = '';
+    inputs.coderBodyInput.value = '';
+    inputs.coderLabelInput.value = '';
+    inputs.handleInput.value = '';
+    inputs.useLabelsInput.checked = false;
+    const overrides = {
+      hasRepo: true,
+      hasDri: true,
+      hasCoderBodyFlag: true,
+      hasCoderLabelFlag: true,
+      hasHandle: true,
+      hasUseLabels: true
+    };
+    saveSettings(inputs, overrides);
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    expect(saved.repo).toBe('prev/repo');
+    expect(saved.dri).toBe('DRI:@prev');
+    expect(saved.coderBodyFlag).toBe('prevBody');
+    expect(saved.coderLabelFlag).toBe('prevLabel');
+    expect(saved.handle).toBe('@prev');
+    expect(saved.useLabels).toBe(true);
+    expect(inputs.repoInput.value).toBe('prev/repo');
+    expect(inputs.useLabelsInput.checked).toBe(true);
+  });
 });
 
 describe('persistCardCache catches setItem errors', () => {
