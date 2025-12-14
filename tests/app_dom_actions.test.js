@@ -104,4 +104,24 @@ describe('app wiring actions', () => {
     expect(document.getElementById('status-issues').textContent).toBe('Not loaded');
     expect(document.getElementById('status-pulls').textContent).toBe('Not loaded');
   });
+
+  it('shows repo error when repo is invalid', async () => {
+    const repoInput = document.getElementById('repo');
+    repoInput.value = '';
+    repoInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const loadIssues = document.getElementById('load-issues');
+    loadIssues.click();
+    await flush();
+    const statusIssues = document.getElementById('status-issues');
+    expect(statusIssues.textContent).toContain('Enter a repository');
+  });
+
+  it('surfaces errors and keeps status when fetch fails', async () => {
+    mockFetchSearch.mockRejectedValueOnce(new Error('boom'));
+    const loadPulls = document.getElementById('load-pulls');
+    loadPulls.click();
+    await flush();
+    const pullsStatus = document.getElementById('status-pulls');
+    expect(pullsStatus.textContent).toContain('error');
+  });
 });

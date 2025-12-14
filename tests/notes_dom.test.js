@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, expect } from 'vitest';
 
-import { renderNote, pruneNoteBindings } from '../docs/notes.js';
-import { NOTES_KEY } from '../docs/config.js';
+import { renderNote, pruneNoteBindings, noteKey } from '../docs/notes.js';
+import { NOTES_KEY, DEFAULTS } from '../docs/config.js';
 
 function makeState() {
   return { repo: 'owner/repo' };
@@ -63,5 +63,10 @@ describe('notes DOM bindings', () => {
     pruneNoteBindings();
     // If prune works, it should not throw and bindings map is emptied internally.
     expect(true).toBe(true);
+  });
+
+  it('noteKey falls back to DEFAULTS.repo when state.repo missing', () => {
+    const key = noteKey({}, { id: 99 });
+    expect(key).toBe(`${DEFAULTS.repo}#99`);
   });
 });
