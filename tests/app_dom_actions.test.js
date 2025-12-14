@@ -50,7 +50,9 @@ function setupDom() {
   const dom = new DOMParser().parseFromString(html, 'text/html');
   dom.querySelectorAll('script').forEach((s) => s.remove());
   dom
-    .querySelectorAll('link[rel="preconnect"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]')
+    .querySelectorAll(
+      'link[rel="preconnect"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"], link[rel="stylesheet"]'
+    )
     .forEach((l) => l.remove());
   document.documentElement.innerHTML = dom.documentElement.innerHTML;
 }

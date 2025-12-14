@@ -9,10 +9,12 @@ function setupDomFromIndex() {
   const htmlPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../docs/index.html');
   const html = fs.readFileSync(htmlPath, 'utf8');
   const dom = new DOMParser().parseFromString(html, 'text/html');
-  // Remove scripts/fonts/preconnects to avoid side effects; we import app.js explicitly.
+  // Remove scripts/fonts/preconnects/styles to avoid side effects; we import app.js explicitly.
   dom.querySelectorAll('script').forEach((s) => s.remove());
   dom
-    .querySelectorAll('link[rel="preconnect"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]')
+    .querySelectorAll(
+      'link[rel="preconnect"], link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"], link[rel="stylesheet"]'
+    )
     .forEach((l) => l.remove());
   document.documentElement.innerHTML = dom.documentElement.innerHTML;
 }

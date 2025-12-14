@@ -3,7 +3,9 @@ import { normalizeHandle, isValidRepo } from './utils.js';
 
 // Build GitHub search query from config template and current state.
 export function buildQuery(cfg, state) {
-  const replacement = state.useLabels ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
+  // useLabels flag means "search body instead of labels" (name is historical)
+  const useBodySource = !!state.useLabels;
+  const replacement = useBodySource ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
   const query = cfg.query
     .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
     .replace(/__HANDLE__/g, state.handle)

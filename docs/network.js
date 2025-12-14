@@ -4,7 +4,8 @@ import { sleep } from './utils.js';
 let lastFetchAt = 0;
 
 export async function rateLimit(token) {
-  if (token) return;
+  const hasToken = typeof token === 'string' && token.trim().length > 0;
+  if (hasToken) return;
   const now = Date.now();
   const wait = Math.max(0, NO_TOKEN_DELAY_MS - (now - lastFetchAt));
   if (wait > 0) await sleep(wait);
