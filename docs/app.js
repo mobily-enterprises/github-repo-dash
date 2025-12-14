@@ -85,9 +85,9 @@ async function ensureDriLabels(repo, token) {
   if (repo === driLabelsRepo && driLabelsPromise) return driLabelsPromise;
   if (repo === driLabelsRepo && !driLabelsPromise) return Promise.resolve(driLabels);
 
+  driLabelsRepo = repo;
   const fetchPromise = fetchLabels(repo, token)
     .then((names) => {
-      driLabelsRepo = repo;
       driLabels = names;
       driLabelsPromise = Promise.resolve(names);
       return names;
@@ -96,6 +96,7 @@ async function ensureDriLabels(repo, token) {
       if (repo === driLabelsRepo) {
         driLabels = [];
         driLabelsPromise = null;
+        driLabelsRepo = '';
       }
       throw err;
     });
@@ -233,6 +234,8 @@ function makeCard(cfg) {
     const token = tokenInput.value.trim();
     setStatus(cfg.section, `Refreshing "${cfg.label}"…`);
     try {
+      await ensureDriLabels(state.repo, token);
+      renderQueries();
       await refreshCard(cardState, state, token);
       setStatus(cfg.section, 'Updated.', 'ok');
     } catch (err) {
@@ -243,6 +246,21 @@ function makeCard(cfg) {
 
 function renderQueries() {
   const state = getStoreState();
+  const token = tokenInput.value.trim();
+  if (!state.useBodyText && isValidRepo(state.repo, REPO_REGEX)) {
+    const needsLabels = state.repo !== driLabelsRepo || !driLabelsPromise;
+    if (needsLabels) {
+      const repoAtRequest = state.repo;
+      ensureDriLabels(state.repo, token)
+        .then(() => {
+          const latest = getStoreState();
+          if (latest?.repo === repoAtRequest && !latest.useBodyText) renderQueries();
+        })
+        .catch(() => {
+          /* hint stays as-is on label fetch failure */
+        });
+    }
+  }
   cards.forEach(({ cfg, searchLink, hint }) => {
     const validRepo = isValidRepo(state.repo, REPO_REGEX);
     if (!validRepo) {
@@ -390,6 +408,7 @@ async function refreshSection(section) {
   }
   try {
     await ensureDriLabels(state.repo, token);
+    renderQueries();
   } catch (err) {
     setStatus(section, err.message || 'Failed to load labels', 'error');
     return;

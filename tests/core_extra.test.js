@@ -40,12 +40,12 @@ describe('buildQuery template selection and DRI label expansions', () => {
     const cfg = { queryUsingLabels: '__DRI_LABELS_OR__ __DRI_LABELS_NOT__' };
     const empty = buildQuery(cfg, baseState, { driLabels: [] });
     expect(empty).toContain('label:"__none__"');
-    expect(empty).not.toContain('NOT label');
+    expect(empty).not.toContain('-label');
 
     const multi = buildQuery(cfg, baseState, { driLabels: ['DRI:@a', 'DRI:@b'] });
     expect(multi).toContain('(label:"DRI:@a" OR label:"DRI:@b")');
-    expect(multi).toContain('NOT label:"DRI:@a"');
-    expect(multi).toContain('NOT label:"DRI:@b"');
+    expect(multi).toContain('-label:"DRI:@a"');
+    expect(multi).toContain('-label:"DRI:@b"');
   });
 
   it('falls back to body template when label template missing', () => {

@@ -33,13 +33,14 @@ const mockFetchSearch = vi.fn(async () =>
     }
   ])
 );
+const mockFetchLabels = vi.fn().mockResolvedValue(['DRI:@alice', 'DRI:@bob']);
 
 vi.mock('../docs/network.js', async () => {
   const actual = await vi.importActual('../docs/network.js');
   return {
     ...actual,
     fetchSearch: mockFetchSearch,
-    fetchLabels: vi.fn().mockResolvedValue(['DRI:@alice', 'DRI:@bob']),
+    fetchLabels: mockFetchLabels,
     rateLimit: vi.fn(),
     markFetched: vi.fn()
   };
@@ -87,6 +88,7 @@ describe('app wiring actions', () => {
     loadPulls.click();
     await flush();
     expect(mockFetchSearch).toHaveBeenCalled();
+    expect(mockFetchLabels).toHaveBeenCalledWith('owner/repo', '');
     const pullsStatus = document.getElementById('status-pulls');
     expect(pullsStatus.textContent).toBe('Updated.');
     // ensure the pulls grid has cards (config filtered by section)
@@ -106,6 +108,17 @@ describe('app wiring actions', () => {
     await flush();
     expect(document.getElementById('status-issues').textContent).toBe('Not loaded');
     expect(document.getElementById('status-pulls').textContent).toBe('Not loaded');
+  });
+
+  it('reload button fetches labels before refreshing card', async () => {
+    const loadPulls = document.getElementById('load-pulls');
+    loadPulls.click();
+    await flush();
+    mockFetchLabels.mockClear();
+    const firstReload = document.querySelector('.card .mini-btn');
+    firstReload.click();
+    await flush();
+    expect(mockFetchLabels).toHaveBeenCalledTimes(0);
   });
 
   it('shows repo error when repo is invalid', async () => {

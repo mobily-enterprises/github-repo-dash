@@ -176,9 +176,25 @@ describe('fetchLabels', () => {
     const labels = await fetchLabels('owner/repo', '');
     expect(labels).toEqual(['DRI:@a', 'coder']);
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('owner%2Frepo'),
+      expect.stringContaining('/repos/owner/repo/labels'),
       expect.objectContaining({ headers: expect.any(Object) })
     );
+  });
+
+  it('omits auth header when token is blank', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve([])
+    });
+    await fetchLabels('owner/repo', '');
+    const headers = global.fetch.mock.calls[0][1].headers;
+    expect(headers.Authorization).toBeUndefined();
+  });
+
+  it('throws when repo is malformed', async () => {
+    await expect(fetchLabels('invalid', '')).rejects.toThrow('Invalid repository for labels fetch');
+    await expect(fetchLabels('/justname', '')).rejects.toThrow('Invalid repository for labels fetch');
   });
 
   it('returns empty array when payload is not an array', async () => {
@@ -239,5 +255,45 @@ describe('fetchLabels', () => {
       json: () => Promise.reject(new Error('bad json'))
     });
     await expect(fetchLabels('owner/repo')).rejects.toThrow('GitHub labels fetch failed: 500 Server');
+  });
+
+  it('uses documentation_url from label errors when present', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      json: () => Promise.resolve({ documentation_url: 'https://docs' })
+    });
+    await expect(fetchLabels('owner/repo')).rejects.toThrow('GitHub labels fetch failed: 401 https://docs');
+  });
+
+  it('falls back to statusText when label error body lacks message', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: () => Promise.resolve({})
+    });
+    await expect(fetchLabels('owner/repo')).rejects.toThrow('GitHub labels fetch failed: 400 Bad Request');
+  });
+
+  it('falls back when label error body is string', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Server',
+      json: () => Promise.resolve('plain error')
+    });
+    await expect(fetchLabels('owner/repo')).rejects.toThrow('GitHub labels fetch failed: 500 plain error');
+  });
+
+  it('falls back when label error body is null', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 418,
+      statusText: "I'm a teapot",
+      json: () => Promise.resolve(null)
+    });
+    await expect(fetchLabels('owner/repo')).rejects.toThrow("GitHub labels fetch failed: 418 I'm a teapot");
   });
 });

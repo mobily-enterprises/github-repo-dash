@@ -24,7 +24,7 @@ export function buildQuery(cfg, state, opts = {}) {
   const driLabelsNot =
     driLabels.length === 0
       ? ''
-      : driLabels.map((label) => `NOT label:"${escapeLabelValue(label)}"`).join(' ');
+      : driLabels.map((label) => `-label:"${escapeLabelValue(label)}"`).join(' ');
 
   const query = template
     .replace(/__DRI_LABELS_OR__/g, driLabelsOr)

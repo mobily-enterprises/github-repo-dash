@@ -54,7 +54,9 @@ export async function fetchSearch(query, token, opts = {}) {
 
 export async function fetchLabels(repo, token, opts = {}) {
   const { signal } = opts;
-  const url = `https://api.github.com/repos/${encodeURIComponent(repo)}/labels?per_page=100`;
+  const [owner, name] = (repo || '').split('/');
+  if (!owner || !name) throw new Error('Invalid repository for labels fetch');
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/labels?per_page=100`;
   const headers = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28'
