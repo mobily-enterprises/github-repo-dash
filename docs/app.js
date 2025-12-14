@@ -107,7 +107,7 @@ const config = [
 
     // Baseline defaults for inputs and flags. Query params can override and disable these.
     const DEFAULTS = {
-      repo: 'mobily-enterprises/github-repo-dash',
+      repo: '',
       dri: 'DRI:@',
       handle: '@me',
       token: '',
@@ -120,6 +120,7 @@ const config = [
 const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.hash}`;
 const NOTES_KEY = `${STORAGE_KEY}:notes`;
 const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
+    const REPO_REGEX = /^[^/\\s]+\/[^/\\s]+$/;
 
 // Inputs and static references
 const repoTitle = document.getElementById('repo-title');
@@ -174,6 +175,8 @@ const loadButtons = {
       if (!handle) return 'not found';
       return handle.startsWith('@') ? handle : `@${handle}`;
     };
+
+    const isValidRepo = (repo) => !!repo && REPO_REGEX.test(repo);
 
     // Throttle GitHub API calls to avoid secondary limits; slower when unauthenticated.
     async function rateLimit(token) {
@@ -656,9 +659,15 @@ const loadButtons = {
     function renderQueries() {
       const state = getState();
       cards.forEach(({ cfg, searchLink, hint }) => {
-        const query = buildQuery(cfg, state);
-        searchLink.href = buildSearchUrl(state, cfg);
-        hint.textContent = query;
+        const validRepo = isValidRepo(state.repo);
+        if (!validRepo) {
+          searchLink.href = '#';
+          hint.textContent = 'Enter owner/repo to build query';
+        } else {
+          const query = buildQuery(cfg, state);
+          searchLink.href = buildSearchUrl(state, cfg);
+          hint.textContent = query;
+        }
       });
     }
 
@@ -755,6 +764,11 @@ const loadButtons = {
 
     // Fetch and render a single card, updating cache on success.
     async function refreshCard(cardState, state, token) {
+      if (!isValidRepo(state.repo)) {
+        cardState.count.textContent = '–';
+        setListPlaceholder(cardState.list, 'Enter a repository (owner/repo) to load.', 'empty');
+        return;
+      }
       const query = buildQuery(cardState.cfg, state);
       cardState.count.textContent = '…';
       setListPlaceholder(cardState.list, 'Loading…');
@@ -793,6 +807,14 @@ const loadButtons = {
       if (sectionCards.length === 0) return;
       const token = tokenInput.value.trim();
       const state = getState();
+      if (!isValidRepo(state.repo)) {
+        setStatus(section, 'Enter a repository (owner/repo) to load.', 'error');
+        sectionCards.forEach((cardState) => {
+          cardState.count.textContent = '–';
+          setListPlaceholder(cardState.list, 'Enter a repository (owner/repo) to load.', 'empty');
+        });
+        return;
+      }
       const delay = token ? SEARCH_DELAY_MS : NO_TOKEN_DELAY_MS;
       setStatus(section, `Refreshing ${sectionCards.length} searches…`);
       let errors = 0;
