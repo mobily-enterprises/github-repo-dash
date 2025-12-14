@@ -45,7 +45,7 @@ const config = [
         label: 'DRI waiting',
         title: 'PRs: you are DRI, not assignee',
         desc: 'You are DRI, not assigned: waiting on others.',
-        query: 'is:pr is:open "__DRI_HANDLE__" -assignee:__HANDLE_BARE__'
+        query: 'is:pr is:open (in:body "__DRI_HANDLE__" OR label:"__DRI_HANDLE__") -assignee:__HANDLE_BARE__'
       },
       {
         id: 'prs-dri-me',
@@ -53,7 +53,7 @@ const config = [
         label: 'DRI: You',
         title: 'PRs: you are DRI',
         desc: 'PR body lists you as DRI.',
-        query: 'is:pr is:open "__DRI_HANDLE__"'
+        query: 'is:pr is:open (in:body "__DRI_HANDLE__" OR label:"__DRI_HANDLE__")'
       },
       {
         id: 'prs-dri-waiting-assignee',
@@ -63,7 +63,7 @@ const config = [
         tone: 'warn',
         title: 'PRs with DRI but no assignee',
         desc: 'DRI declared in body but nobody is assigned. Assign the work.',
-        query: 'is:pr is:open "__DRI__" no:assignee'
+        query: 'is:pr is:open (in:body "__DRI__" OR label:"__DRI__") no:assignee'
       },
       {
         id: 'prs-no-dri',
@@ -72,7 +72,7 @@ const config = [
         tone: 'warn',
         title: 'Open PRs with no DRI',
         desc: 'PR body does not declare a DRI. Unowned.',
-        query: 'is:pr is:open in:body NOT "__DRI__"'
+        query: 'is:pr is:open NOT (in:body "__DRI__" OR label:"__DRI__")'
       },
       {
         id: 'prs-with-dri',
@@ -80,7 +80,7 @@ const config = [
         label: 'Owned',
         title: 'Open PRs with a DRI',
         desc: 'PR body includes a DRI tag.',
-        query: 'is:pr is:open "__DRI__"'
+        query: 'is:pr is:open (in:body "__DRI__" OR label:"__DRI__")'
       },
       {
         id: 'prs-assignee-no-dri',
