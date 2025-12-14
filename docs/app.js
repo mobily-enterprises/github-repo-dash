@@ -107,7 +107,7 @@ const config = [
 
     // Baseline defaults for inputs and flags. Query params can override and disable these.
     const DEFAULTS = {
-      repo: '',
+      repo: 'mobily-enterprises/github-repo-dash',
       dri: 'DRI:@',
       handle: '@me',
       token: '',
