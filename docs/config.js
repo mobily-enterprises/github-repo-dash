@@ -103,7 +103,7 @@ export const DEFAULTS = {
   token: '',
   coderBodyFlag: 'coder',
   coderLabelFlag: 'DRI_is_coder',
-  useLabels: false
+  useBody: false
 };
 
 export const SEARCH_DELAY_MS = 5000;

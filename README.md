@@ -76,7 +76,7 @@ When rendering items, the dashboard extracts DRI and coder/reviewer role:
 - **DRI token**: default `DRI:@`; used in queries and extraction.
 - **Coder flags**: body flag `coder`, label flag `DRI_is_coder`; both configurable.
 - **DRI source toggle**: labels vs body; persisted in settings.
-- Settings, notes, and card cache are in localStorage; query params can override and lock fields (including `use_labels=true/false`).
+- Settings, notes, and card cache are in localStorage; query params can override and lock fields (including `use_body=true/false`).
 
 ## How to use (quick workflow)
 
@@ -96,7 +96,7 @@ You can prefill and lock fields via query params:
 - `&dri_token=DRI:@`
 - `&coder_body_flag=coder`
 - `&coder_label_flag=DRI_is_coder`
-- `&use_labels=true|false` (true = look in body; false = labels)
+- `&use_body=true|false` (true = look in body; false = labels)
 
 Locked fields become disabled in the UI.
 

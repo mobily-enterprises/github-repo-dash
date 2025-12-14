@@ -10,9 +10,9 @@ function createInputs() {
   const coderLabelInput = document.createElement('input');
   const handleInput = document.createElement('input');
   const tokenInput = document.createElement('input');
-  const useLabelsInput = document.createElement('input');
-  useLabelsInput.type = 'checkbox';
-  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput };
+  const useBodyInput = document.createElement('input');
+  useBodyInput.type = 'checkbox';
+  return { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useBodyInput };
 }
 
 beforeEach(() => {
@@ -21,11 +21,11 @@ beforeEach(() => {
 });
 
 describe('storage load/save', () => {
-  it('saves and loads settings including useLabels', () => {
+  it('saves and loads settings including useBody', () => {
     const inputs = createInputs();
     inputs.repoInput.value = 'owner/repo';
     inputs.handleInput.value = '@me';
-    inputs.useLabelsInput.checked = true;
+    inputs.useBodyInput.checked = true;
 
     saveSettings(inputs, {});
 
@@ -34,24 +34,24 @@ describe('storage load/save', () => {
 
     expect(fresh.repoInput.value).toBe('owner/repo');
     expect(fresh.handleInput.value).toBe('@me');
-    expect(fresh.useLabelsInput.checked).toBe(true);
+    expect(fresh.useBodyInput.checked).toBe(true);
   });
 
-  it('respects use_labels override and disables input', () => {
+  it('respects use_body override and disables input', () => {
     const inputs = createInputs();
-    const overrides = { hasUseLabels: true, useLabels: false };
+    const overrides = { hasUseBody: true, useBody: false };
     loadSettings(inputs, overrides);
-    expect(inputs.useLabelsInput.checked).toBe(false);
-    expect(inputs.useLabelsInput.disabled).toBe(true);
+    expect(inputs.useBodyInput.checked).toBe(false);
+    expect(inputs.useBodyInput.disabled).toBe(true);
   });
 });
 
 describe('getState', () => {
-  it('includes useLabels flag', () => {
+  it('includes useBody flag', () => {
     const inputs = createInputs();
-    inputs.useLabelsInput.checked = false;
+    inputs.useBodyInput.checked = false;
     const state = getState(inputs);
-    expect(state.useLabels).toBe(false);
+    expect(state.useBody).toBe(false);
     expect(state.driToken).toBe(DEFAULTS.dri);
   });
 });

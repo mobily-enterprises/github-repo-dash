@@ -15,10 +15,10 @@ describe('getQueryOverrides branch coverage', () => {
     expect(o.handle).toBe('');
   });
 
-  it('handles use_labels invalid value but counts as provided', () => {
-    window.history.replaceState({}, '', '/?use_labels=maybe');
+  it('handles use_body invalid value but counts as provided', () => {
+    window.history.replaceState({}, '', '/?use_body=maybe');
     const o = getQueryOverrides();
-    expect(o.useLabels).toBe(false);
-    expect(o.hasUseLabels).toBe(true);
+    expect(o.useBody).toBe(false);
+    expect(o.hasUseBody).toBe(true);
   });
 });

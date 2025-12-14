@@ -3,8 +3,7 @@ import { normalizeHandle, isValidRepo } from './utils.js';
 
 // Build GitHub search query from config template and current state.
 export function buildQuery(cfg, state) {
-  // useLabels flag means "search body instead of labels" (name is historical)
-  const useBodySource = !!state.useLabels;
+  const useBodySource = !!state.useBody;
   const replacement = useBodySource ? (token) => `in:body "${token}"` : (token) => `label:"${token}"`;
   const query = cfg.query
     .replace(/__DRI_HANDLE__/g, replacement(`${state.driToken}${state.handleBare}`))
@@ -24,17 +23,15 @@ export function getQueryOverrides() {
   const rawHandle = params.get('handle');
   const rawCoderBody = params.get('coder_body_flag');
   const rawCoderLabel = params.get('coder_label_flag');
-  const rawUseLabels = params.get('use_labels');
+  const rawUseBody = params.get('use_body');
 
   const repo = rawRepo && rawRepo.trim() ? rawRepo.trim() : '';
   const dri = rawDri && rawDri.trim() ? rawDri.trim() : '';
   const handle = rawHandle && rawHandle.trim() ? normalizeHandle(rawHandle, DEFAULTS.handle) : '';
   const coderBodyFlag = rawCoderBody && rawCoderBody.trim() ? rawCoderBody.trim() : '';
   const coderLabelFlag = rawCoderLabel && rawCoderLabel.trim() ? rawCoderLabel.trim() : '';
-  const useLabels =
-    rawUseLabels !== null
-      ? ['1', 'true', 'yes', 'on'].includes(rawUseLabels.trim().toLowerCase())
-      : null;
+  const useBody =
+    rawUseBody !== null ? ['1', 'true', 'yes', 'on'].includes(rawUseBody.trim().toLowerCase()) : null;
 
   return {
     repo,
@@ -42,13 +39,13 @@ export function getQueryOverrides() {
     handle,
     coderBodyFlag,
     coderLabelFlag,
-    useLabels,
+    useBody,
     hasRepo: !!repo,
     hasDri: !!dri,
     hasHandle: !!handle,
     hasCoderBodyFlag: !!coderBodyFlag,
     hasCoderLabelFlag: !!coderLabelFlag,
-    hasUseLabels: useLabels !== null
+    hasUseBody: useBody !== null
   };
 }
 
