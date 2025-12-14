@@ -14,18 +14,37 @@ export function markFetched() {
   lastFetchAt = Date.now();
 }
 
-export async function fetchSearch(query, token) {
+function parseErrorMessage(body, fallback) {
+  if (!body) return fallback;
+  if (typeof body === 'string') return body;
+  if (body.message) return body.message;
+  return fallback;
+}
+
+export async function fetchSearch(query, token, opts = {}) {
+  const { signal } = opts;
   const url = `https://api.github.com/search/issues?q=${encodeURIComponent(query)}&per_page=8&sort=updated&order=desc`;
   const headers = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28'
   };
   if (token) headers.Authorization = token.startsWith('gh') ? `token ${token}` : `Bearer ${token}`;
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const msg = body.message || res.statusText;
-    throw new Error(`${res.status}: ${msg}`);
+  try {
+    const res = await fetch(url, { headers, signal });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const msg = parseErrorMessage(body, res.statusText);
+      const err = new Error(`GitHub search failed: ${res.status} ${msg}`);
+      err.status = res.status;
+      throw err;
+    }
+    return res.json();
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      const abortErr = new Error('Request aborted');
+      abortErr.code = 'aborted';
+      throw abortErr;
+    }
+    throw err;
   }
-  return res.json();
 }

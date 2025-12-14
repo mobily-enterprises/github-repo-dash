@@ -1,8 +1,8 @@
-import { DEFAULTS, STORAGE_KEY, NOTES_KEY, CARDS_CACHE_KEY } from './config.js';
+import { DEFAULTS, STORAGE_KEY, NOTES_KEY, CARDS_CACHE_KEY, CARDS_CACHE_TTL_MS } from './config.js';
 import { normalizeHandle } from './utils.js';
 
 let notesStore = {};
-let cardCache = { fingerprint: '', cards: {} };
+let cardCache = { fingerprint: '', cards: {}, cachedAt: 0 };
 
 export function loadSettings(inputs, overrides) {
   const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
@@ -54,10 +54,14 @@ export function loadSettings(inputs, overrides) {
   try {
     const cache = JSON.parse(localStorage.getItem(CARDS_CACHE_KEY) || '{}');
     if (cache && typeof cache === 'object') {
-      cardCache = cache;
+      cardCache = {
+        fingerprint: cache.fingerprint || '',
+        cards: cache.cards || {},
+        cachedAt: typeof cache.cachedAt === 'number' ? cache.cachedAt : 0
+      };
     }
   } catch (_) {
-    cardCache = { fingerprint: '', cards: {} };
+    cardCache = { fingerprint: '', cards: {}, cachedAt: 0 };
   }
 }
 
@@ -118,6 +122,12 @@ export function getCardCache() {
 
 export function setCardCache(cache) {
   cardCache = cache;
+}
+
+export function isCacheFresh(cache, ttl = CARDS_CACHE_TTL_MS) {
+  if (!cache || !cache.cachedAt) return false;
+  const age = Date.now() - cache.cachedAt;
+  return age <= ttl;
 }
 
 export function getState(inputs) {

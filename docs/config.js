@@ -112,3 +112,4 @@ export const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${wind
 export const NOTES_KEY = `${STORAGE_KEY}:notes`;
 export const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 export const REPO_REGEX = /^[^/\s]+\/[^/\s]+$/;
+export const CARDS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
