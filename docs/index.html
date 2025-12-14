@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <a class="skip-link" href="#controls-panel">Skip to dashboard controls</a>
   <div class="page">
     <header>
       <div class="title">
@@ -28,7 +29,7 @@
         <p>Live counts and recent items for the core searches. Adjust the repo or the DRI token if you want to reuse this
           for another project.</p>
       </div>
-      <div class="controls">
+      <div class="controls" id="controls-panel">
         <div class="control-row">
           <label>Repository
             <input id="repo" type="text" placeholder="owner/repo" aria-label="Repository" />
@@ -38,8 +39,9 @@
           </label>
           <label title="Optional; stored on this device (localStorage)">
             <span class="label-title">GitHub token <span class="help-icon" aria-label="Stored on this device (localStorage); clear manually if needed" title="Stored on this device (localStorage). Clear manually if needed.">?</span></span>
+            <p id="token-hint" class="sr-only">Token is stored in localStorage on this device; clear it if you are on a shared computer.</p>
             <div class="token-input-row">
-              <input id="token" type="password" placeholder="ghp_xxx" aria-label="GitHub token" />
+              <input id="token" type="password" placeholder="ghp_xxx" aria-label="GitHub token" aria-describedby="token-hint" />
               <button id="clear-token" class="mini-btn icon-btn" type="button" aria-label="Clear token">×</button>
             </div>
           </label>
@@ -69,8 +71,8 @@
       <div class="section-header">
         <h2>Your pull requests</h2>
         <div class="actions">
-          <button id="load-pulls">Load</button>
-          <div id="status-pulls" class="status" aria-live="polite">Not loaded</div>
+          <button id="load-pulls" aria-controls="prs-grid">Load</button>
+          <div id="status-pulls" class="status" role="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
       <div class="grid" id="prs-grid"></div>
@@ -80,8 +82,8 @@
       <div class="section-header">
         <h2>PR assigning and triaging</h2>
         <div class="actions">
-          <button id="load-triage">Load</button>
-          <div id="status-triage" class="status" aria-live="polite">Not loaded</div>
+          <button id="load-triage" aria-controls="triage-priority-grid triage-grid">Load</button>
+          <div id="status-triage" class="status" role="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
       <div class="grid priority-grid" id="triage-priority-grid"></div>
@@ -92,8 +94,8 @@
       <div class="section-header">
         <h2>Issues</h2>
         <div class="actions">
-          <button id="load-issues">Load</button>
-          <div id="status-issues" class="status" aria-live="polite">Not loaded</div>
+          <button id="load-issues" aria-controls="issues-grid">Load</button>
+          <div id="status-issues" class="status" role="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
       <div class="grid" id="issues-grid"></div>
