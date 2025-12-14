@@ -16,12 +16,16 @@
   },
   "license": "ISC",
   "author": "Tony Mobily",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
+    "serve": "serve docs",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
   }
 }
