@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
-import { CARDS_CACHE_TTL_MS } from '../docs/config.js';
+import { CARDS_CACHE_TTL_MS, CARDS_CACHE_KEY } from '../docs/config.js';
 import { isCacheFresh, loadSettings, getCardCache } from '../docs/storage.js';
-import { CARDS_CACHE_KEY } from '../docs/config.js';
 
 function createInputs() {
   const repoInput = document.createElement('input');

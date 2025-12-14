@@ -14,7 +14,6 @@ import { extractDri, formatDri, extractAssignee, formatAssignee } from './dri.js
 import {
   loadSettings,
   saveSettings,
-  getState,
   makeFingerprint,
   getCardCache,
   setCardCache,
@@ -24,6 +23,7 @@ import {
 import { renderNote, pruneNoteBindings } from './notes.js';
 import { rateLimit, fetchSearch, markFetched } from './network.js';
 import { buildQuery, getQueryOverrides } from './core.js';
+import { initState, updateState, getState as getStoreState } from './state.js';
 
 // DOM references
 const repoTitle = document.getElementById('repo-title');
@@ -155,7 +155,7 @@ function makeCard(cfg) {
   const targetGrid = grids[cfg.grid || cfg.section];
   if (targetGrid) targetGrid.appendChild(card);
   reloadBtn.addEventListener('click', async () => {
-    const state = getState(inputs);
+    const state = getStoreState();
     const token = tokenInput.value.trim();
     setStatus(cfg.section, `Refreshing "${cfg.label}"…`);
     try {
@@ -168,7 +168,7 @@ function makeCard(cfg) {
 }
 
 function renderQueries() {
-  const state = getState(inputs);
+  const state = getStoreState();
   cards.forEach(({ cfg, searchLink, hint }) => {
     const validRepo = isValidRepo(state.repo, REPO_REGEX);
     if (!validRepo) {
@@ -193,8 +193,8 @@ function hydrateCardsFromCache(state) {
   if (!cache?.fingerprint || cache.fingerprint !== makeFingerprint(state)) return;
   if (!isCacheFresh(cache, CARDS_CACHE_TTL_MS)) {
     Object.keys(statusEls).forEach((section) => {
-      setStatus(section, 'Cache expired; please reload.', 'warn');
       markSectionStale(section);
+      setStatus(section, 'Cache expired; please reload.', 'warn');
     });
     return;
   }
@@ -303,7 +303,7 @@ async function refreshSection(section) {
   const sectionCards = cardsForSection(section);
   if (sectionCards.length === 0) return;
   const token = tokenInput.value.trim();
-  const state = getState(inputs);
+  const state = getStoreState();
   if (!isValidRepo(state.repo, REPO_REGEX)) {
     setStatus(section, 'Enter a repository (owner/repo) to load.', 'error');
     sectionCards.forEach((cardState) => {
@@ -342,13 +342,15 @@ function init() {
   const overrides = getQueryOverrides();
   loadSettings(inputs, overrides);
   config.forEach(makeCard);
-      renderQueries();
-      renderTitle();
-      Object.keys(loadButtons).forEach(markSectionStale);
-  hydrateCardsFromCache(getState(inputs));
+  initState(inputs);
+  renderQueries();
+  renderTitle();
+  Object.keys(loadButtons).forEach(markSectionStale);
+  hydrateCardsFromCache(getStoreState());
 
   const persistAndRender = () => {
     saveSettings(inputs, overrides);
+    updateState(inputs);
     renderQueries();
     renderTitle();
     Object.keys(loadButtons).forEach(markSectionStale);
