@@ -33,9 +33,9 @@ describe('loadSettings respects cachedAt', () => {
     const inputs = createInputs();
     localStorage.setItem(
       CARDS_CACHE_KEY,
-      JSON.stringify({ fingerprint: 'fp', cards: {}, cachedAt: 12345 })
+      JSON.stringify({ fingerprint: 'fp', cards: { a: { cachedAt: 12345 } }, cachedAt: 12345 })
     );
     loadSettings(inputs, {});
-    expect(getCardCache().cachedAt).toBe(12345);
+    expect(getCardCache().cards.a.cachedAt).toBe(12345);
   });
 });

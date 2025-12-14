@@ -202,6 +202,10 @@ function hydrateCardsFromCache(state) {
   Object.entries(cache.cards || {}).forEach(([id, payload]) => {
     const cardState = cards.get(id);
     if (!cardState) return;
+    if (!isCacheFresh({ cards: { single: payload } }, CARDS_CACHE_TTL_MS)) {
+      setStatus(cardState.cfg.section, 'Cache expired; please reload.', 'warn');
+      return;
+    }
     const items = payload?.items || [];
     const count = payload?.total_count;
     cardState.count.textContent = count?.toLocaleString?.() || count || '0';
@@ -272,15 +276,15 @@ async function refreshCard(cardState, state, token) {
     const data = await fetchSearch(query, token);
     cardState.count.textContent = data.total_count?.toLocaleString?.() || data.total_count || '0';
     renderItems(cardState, data.items || [], state);
-    const cache = getCardCache() || { fingerprint: '', cards: {}, cachedAt: 0 };
+    const cache = getCardCache() || { fingerprint: '', cards: {} };
     const nextCache = {
       fingerprint: makeFingerprint(state),
-      cachedAt: Date.now(),
       cards: {
         ...(cache.cards || {}),
         [cardState.cfg.id]: {
           items: data.items || [],
-          total_count: data.total_count
+          total_count: data.total_count,
+          cachedAt: Date.now()
         }
       }
     };

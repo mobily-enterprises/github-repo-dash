@@ -125,8 +125,11 @@ export function setCardCache(cache) {
 }
 
 export function isCacheFresh(cache, ttl = CARDS_CACHE_TTL_MS) {
-  if (!cache || !cache.cachedAt) return false;
-  const age = Date.now() - cache.cachedAt;
+  if (!cache || (!cache.cachedAt && !cache.cards)) return false;
+  const cardTimestamps = Object.values(cache.cards || {}).map((entry) => entry?.cachedAt).filter(Boolean);
+  const latest = cardTimestamps.length > 0 ? Math.max(...cardTimestamps) : cache.cachedAt;
+  if (!latest) return false;
+  const age = Date.now() - latest;
   return age <= ttl;
 }
 
