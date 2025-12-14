@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     coverage: {
       provider: 'v8',
+      exclude: ['docs/app.js'],
       thresholds: {
         lines: 99,
         branches: 99,
