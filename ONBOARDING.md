@@ -14,8 +14,8 @@ Welcome! This guide walks you through the codebase so you can confidently make c
 
 The dashboard assumes every PR/issue has a **Directly Responsible Individual (DRI)** and exactly one **assignee** (the person currently working it). The DRI can play two roles:
 
-- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author and there is no coder flag.
-- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA) via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
+- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author of the PR and there is no "DRI is the coder" flag. This is the default when collaborators pick up a PR and assign themselves as DRIs for it. This happens by a body flag like `DRI:@alice` (that is, just text in the issue's body) or a label like `DRI:@alice`.
+- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA). The "forcing" happens via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
 
 Labels typically look like `DRI:@maintainer1`, `DRI_is_coder`, etc. There is always exactly one assignee at a time; the assignee “bounces” between coder and reviewer as work changes hands.
 
