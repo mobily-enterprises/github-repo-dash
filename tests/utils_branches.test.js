@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { createEl, ensureAt } from '../docs/utils.js';
 
 describe('utils branch coverage', () => {

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { formatAssignee } from '../docs/dri.js';
 
 describe('formatAssignee suffix and actions', () => {
