@@ -51,3 +51,24 @@ export async function fetchSearch(query, token, opts = {}) {
     throw err;
   }
 }
+
+export async function fetchLabels(repo, token, opts = {}) {
+  const { signal } = opts;
+  const url = `https://api.github.com/repos/${encodeURIComponent(repo)}/labels?per_page=100`;
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  if (token) headers.Authorization = token.startsWith('gh') ? `token ${token}` : `Bearer ${token}`;
+  const res = await fetch(url, { headers, signal });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = parseErrorMessage(body, res.statusText);
+    const err = new Error(`GitHub labels fetch failed: ${res.status} ${msg}`);
+    err.status = res.status;
+    throw err;
+  }
+  const json = await res.json();
+  if (!Array.isArray(json)) return [];
+  return json.map((label) => label?.name).filter((name) => typeof name === 'string' && name.trim());
+}

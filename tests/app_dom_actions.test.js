@@ -39,6 +39,7 @@ vi.mock('../docs/network.js', async () => {
   return {
     ...actual,
     fetchSearch: mockFetchSearch,
+    fetchLabels: vi.fn().mockResolvedValue(['DRI:@alice', 'DRI:@bob']),
     rateLimit: vi.fn(),
     markFetched: vi.fn()
   };

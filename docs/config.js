@@ -61,7 +61,7 @@ export const config = [
     tone: 'warn',
     title: 'PRs with DRI but no assignee',
     desc: 'DRI declared in body but nobody is assigned. Assign the work.',
-    queryUsingLabels: 'is:pr is:open label:"__DRI__" no:assignee',
+    queryUsingLabels: 'is:pr is:open __DRI_LABELS_OR__ no:assignee',
     queryUsingBodyText: 'is:pr is:open in:body "__DRI__" no:assignee'
   },
   {
@@ -71,7 +71,7 @@ export const config = [
     tone: 'warn',
     title: 'Open PRs with no DRI',
     desc: 'PR body does not declare a DRI. Unowned.',
-    queryUsingLabels: 'is:pr is:open NOT label:"__DRI__"',
+    queryUsingLabels: 'is:pr is:open __DRI_LABELS_NOT__',
     queryUsingBodyText: 'is:pr is:open NOT in:body "__DRI__"',
   },
   {
@@ -80,7 +80,7 @@ export const config = [
     label: 'Owned',
     title: 'Open PRs with a DRI',
     desc: 'PR body includes a DRI tag.',
-    queryUsingLabels: 'is:pr is:open label:"__DRI__"',
+    queryUsingLabels: 'is:pr is:open __DRI_LABELS_OR__',
     queryUsingBodyText: 'is:pr is:open in:body "__DRI__"'
   },
   {
@@ -90,7 +90,7 @@ export const config = [
     tone: 'error',
     title: 'PRs with assignee but no DRI',
     desc: 'Assigned but missing a DRI. Likely erroneous.',
-    queryUsingLabels: 'is:pr is:open assignee:* NOT label:"__DRI__"',
+    queryUsingLabels: 'is:pr is:open assignee:* __DRI_LABELS_NOT__',
     queryUsingBodyText: 'is:pr is:open assignee:* NOT in:body "__DRI__"'
   }
 ];

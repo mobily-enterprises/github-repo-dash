@@ -87,8 +87,10 @@ hydrateCardsFromCache(initialState);
 
 Each card is declarative: `id`, `section` (issues/pulls/triage), label/title/desc, and a **query template**. Templates use tokens:
 
-- `__DRI_HANDLE__` → `DRI:@you` (templates handle whether this lives in a label or body).
-- `__DRI__` → DRI token without a handle (again, template decides label vs body).
+- `__DRI_HANDLE__` → `DRI:@you` (template decides label vs body).
+- `__DRI__` → DRI token without a handle (body templates only).
+- `__DRI_LABELS_OR__` → OR expression for all DRI labels (label templates only).
+- `__DRI_LABELS_NOT__` → multiple `NOT label:"..."` clauses for all DRI labels (label templates only).
 - `__HANDLE_BARE__` / `__HANDLE__` → your handle with/without `@`.
 
 Example:
@@ -121,7 +123,13 @@ const template =
   (state.useBodyText ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
   '';
 
+const driLabelsOr = driLabels.length === 1
+  ? `label:"${driLabels[0]}"`
+  : `(${driLabels.map((l) => `label:"${l}"`).join(' OR ')})`;
+
 const query = template
+  .replace(/__DRI_LABELS_OR__/g, driLabelsOr)
+  .replace(/__DRI_LABELS_NOT__/g, driLabels.map((l) => `NOT label:"${l}"`).join(' '))
   .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
   .replace(/__HANDLE__/g, state.handle)
   .replace(/__HANDLE_BARE__/g, state.handleBare)

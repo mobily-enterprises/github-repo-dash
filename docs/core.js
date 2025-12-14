@@ -1,16 +1,34 @@
 import { DEFAULTS, REPO_REGEX } from './config.js';
 import { normalizeHandle, isValidRepo } from './utils.js';
 
+function escapeLabelValue(label) {
+  return label.replace(/"/g, '\\"');
+}
+
 // Build GitHub search query from config template and current state.
-export function buildQuery(cfg, state) {
+export function buildQuery(cfg, state, opts = {}) {
   const useBodySource = !!state.useBodyText;
+  const driLabels = Array.isArray(opts.driLabels) ? opts.driLabels : [];
   const template =
     (useBodySource && cfg.queryUsingBodyText) ||
     (!useBodySource && cfg.queryUsingLabels) ||
     (useBodySource ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
     '';
 
+  const driLabelsOr =
+    driLabels.length === 0
+      ? 'label:"__none__"'
+      : driLabels.length === 1
+        ? `label:"${escapeLabelValue(driLabels[0])}"`
+        : `(${driLabels.map((label) => `label:"${escapeLabelValue(label)}"`).join(' OR ')})`;
+  const driLabelsNot =
+    driLabels.length === 0
+      ? ''
+      : driLabels.map((label) => `NOT label:"${escapeLabelValue(label)}"`).join(' ');
+
   const query = template
+    .replace(/__DRI_LABELS_OR__/g, driLabelsOr)
+    .replace(/__DRI_LABELS_NOT__/g, driLabelsNot)
     .replace(/__DRI_HANDLE__/g, `${state.driToken}${state.handleBare}`)
     .replace(/__HANDLE__/g, state.handle)
     .replace(/__HANDLE_BARE__/g, state.handleBare)
