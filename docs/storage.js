@@ -14,7 +14,9 @@ export function loadSettings(inputs, overrides) {
     if (saved.coderLabelFlag) coderLabelInput.value = saved.coderLabelFlag;
     if (saved.handle) handleInput.value = normalizeHandle(saved.handle, DEFAULTS.handle);
     if (saved.token) tokenInput.value = saved.token;
-    if (typeof saved.useLabels === 'boolean' && useLabelsInput) useLabelsInput.checked = saved.useLabels;
+    if (!overrides.hasUseLabels && typeof saved.useLabels === 'boolean' && useLabelsInput) {
+      useLabelsInput.checked = saved.useLabels;
+    }
   } catch (_) {
     // ignore malformed storage
   }
@@ -24,6 +26,7 @@ export function loadSettings(inputs, overrides) {
   if (overrides.coderBodyFlag) coderBodyInput.value = overrides.coderBodyFlag;
   if (overrides.coderLabelFlag) coderLabelInput.value = overrides.coderLabelFlag;
   if (overrides.handle) handleInput.value = normalizeHandle(overrides.handle, DEFAULTS.handle);
+  if (overrides.hasUseLabels && useLabelsInput) useLabelsInput.checked = !!overrides.useLabels;
 
   if (!repoInput.value) repoInput.value = DEFAULTS.repo;
   if (!driInput.value) driInput.value = DEFAULTS.dri;
@@ -31,13 +34,17 @@ export function loadSettings(inputs, overrides) {
   if (!coderLabelInput.value) coderLabelInput.value = DEFAULTS.coderLabelFlag;
   if (!handleInput.value) handleInput.value = DEFAULTS.handle;
   if (!tokenInput.value) tokenInput.value = DEFAULTS.token;
-  if (useLabelsInput) useLabelsInput.checked = typeof useLabelsInput.checked === 'boolean' ? useLabelsInput.checked : DEFAULTS.useLabels;
+  if (useLabelsInput && !overrides.hasUseLabels) {
+    useLabelsInput.checked =
+      typeof useLabelsInput.checked === 'boolean' ? useLabelsInput.checked : DEFAULTS.useLabels;
+  }
 
   repoInput.disabled = !!overrides.hasRepo;
   driInput.disabled = !!overrides.hasDri;
   coderBodyInput.disabled = !!overrides.hasCoderBodyFlag;
   coderLabelInput.disabled = !!overrides.hasCoderLabelFlag;
   handleInput.disabled = !!overrides.hasHandle;
+  if (useLabelsInput) useLabelsInput.disabled = !!overrides.hasUseLabels;
 
   try {
     notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');

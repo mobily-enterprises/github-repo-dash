@@ -58,12 +58,17 @@ function getQueryOverrides() {
   const rawHandle = params.get('handle');
   const rawCoderBody = params.get('coder_body_flag');
   const rawCoderLabel = params.get('coder_label_flag');
+  const rawUseLabels = params.get('use_labels');
 
   const repo = rawRepo && rawRepo.trim() ? rawRepo.trim() : '';
   const dri = rawDri && rawDri.trim() ? rawDri.trim() : '';
   const handle = rawHandle && rawHandle.trim() ? normalizeHandle(rawHandle, DEFAULTS.handle) : '';
   const coderBodyFlag = rawCoderBody && rawCoderBody.trim() ? rawCoderBody.trim() : '';
   const coderLabelFlag = rawCoderLabel && rawCoderLabel.trim() ? rawCoderLabel.trim() : '';
+  const useLabels =
+    rawUseLabels !== null
+      ? ['1', 'true', 'yes', 'on'].includes(rawUseLabels.trim().toLowerCase())
+      : null;
 
   return {
     repo,
@@ -75,7 +80,9 @@ function getQueryOverrides() {
     hasDri: !!dri,
     hasHandle: !!handle,
     hasCoderBodyFlag: !!coderBodyFlag,
-    hasCoderLabelFlag: !!coderLabelFlag
+    hasCoderLabelFlag: !!coderLabelFlag,
+    useLabels,
+    hasUseLabels: useLabels !== null
   };
 }
 
