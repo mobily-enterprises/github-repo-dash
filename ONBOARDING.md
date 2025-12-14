@@ -71,9 +71,10 @@ Key snippet (trimmed):
 overrides = getQueryOverrides();
 loadSettings(inputs, overrides);
 config.forEach(makeCard);
-const initialState = normalizeAppState(getStoredState(inputs));
-initState(initialState);
-saveSettings(inputs, overrides, initialState);
+const raw = getStoredState(inputs);           // reads inputs prefilled by loadSettings/overrides
+const initialState = normalizeAppState(raw);  // adds defaults, normalizes handle/flags
+initState(initialState);                      // seeds the store
+saveSettings(inputs, overrides, initialState); // re-persist normalized defaults
 renderQueries();
 renderTitle();
 markAllSectionsStale();
