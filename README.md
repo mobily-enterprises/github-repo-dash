@@ -4,6 +4,10 @@ A lightweight, static dashboard for triaging GitHub repositories. It shows live 
 
 [Dashboard page](https://mobily-enterprises.github.io/github-repo-dash)
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, testing, and PR guidelines.
+
 ## Workflow: DRI, Reviewer vs Coder, and Assignee
 
 This dashboard is built around a DRI (Directly Responsible Individual) model:
