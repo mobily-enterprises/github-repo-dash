@@ -14,8 +14,8 @@ Welcome! This guide walks you through the codebase so you can confidently make c
 
 The dashboard assumes every PR/issue has a **Directly Responsible Individual (DRI)** and exactly one **assignee** (the person currently working it). The DRI can play two roles:
 
-- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author of the PR and there is no "DRI is the coder" flag. This is the default when collaborators pick up a PR and assign themselves as DRIs for it. This happens by a body flag like `DRI:@alice` (that is, just text in the issue's body) or a label like `DRI:@alice`.
-- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA). The "forcing" happens via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
+- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author and there is no coder flag.
+- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA) via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
 
 Labels typically look like `DRI:@maintainer1`, `DRI_is_coder`, etc. There is always exactly one assignee at a time; the assignee “bounces” between coder and reviewer as work changes hands.
 
@@ -53,15 +53,17 @@ The dashboard lives at `docs/index.html` and works the same on GitHub Pages.
 
 ## The startup sequence (what happens on load)
 
-The entry point is `docs/app.js`. On load it:
+The entry point is the `init()` function in `docs/app.js`. On load it:
 
 1) **Reads query param overrides** (repo, handle, flags) via `getQueryOverrides()` in `core.js`. These can lock inputs.
-2) **Loads saved settings** from localStorage into inputs via `loadSettings()` in `storage.js`.
+2) **Loads saved settings** from `localStorage` into the form inputs via `loadSettings()` in `storage.js` (under `STORAGE_KEY`).
 3) **Builds cards** from `config` (see below).
 4) **Initializes state** with `initState()` from `state.js` using normalized input values.
 5) **Saves settings** back to storage to ensure defaults are persisted.
 6) **Renders queries and title**, marks cards stale, and **hydrates from cache** if the fingerprint matches.
 7) **Hooks event listeners** for inputs, the DRI-source toggle, clear-token button, and load buttons.
+
+Settings retrieval happens in two places: `loadSettings` reads from `localStorage` to prefill/disable inputs, and `getState(inputs)` (used right after `loadSettings` inside `normalizeAppState`) re-reads those input values to derive the initial state snapshot that drives rendering and cache fingerprints.
 
 Key snippet (trimmed):
 
@@ -69,9 +71,10 @@ Key snippet (trimmed):
 overrides = getQueryOverrides();
 loadSettings(inputs, overrides);
 config.forEach(makeCard);
-const initialState = normalizeAppState(getStoredState(inputs));
-initState(initialState);
-saveSettings(inputs, overrides, initialState);
+const raw = getStoredState(inputs);           // reads inputs prefilled by loadSettings/overrides
+const initialState = normalizeAppState(raw);  // adds defaults, normalizes handle/flags
+initState(initialState);                      // seeds the app-wide state store (state.js)
+saveSettings(inputs, overrides, initialState); // re-persist normalized defaults
 renderQueries();
 renderTitle();
 markAllSectionsStale();
@@ -124,18 +127,65 @@ const query = cfg.query
 return state.repo ? `repo:${state.repo} ${query.trim()}` : query.trim();
 ```
 
-`getQueryOverrides()` reads `?repo=...&handle=@you&use_labels=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL.
+`getQueryOverrides()` reads `?repo=...&handle=@you&use_labels=true|false&dri_token=...&coder_body_flag=...&coder_label_flag=...` and returns values plus “hasX” booleans so inputs can be disabled when locked by URL. The booleans are explicit: `hasRepo`, `hasDri`, `hasHandle`, `hasCoderBodyFlag`, `hasCoderLabelFlag`, and `hasUseLabels`. `loadSettings`/`saveSettings` use them to disable the matching inputs and ignore saved settings when a param is present.
 
 ## State store (`docs/state.js`)
 
-A minimal observable store:
+This file is a tiny observable state container—no frameworks. It holds the “app state” (repo, handle, DRI token, coder flags, useLabels) and notifies listeners when it changes.
 
-- `initState(initial)` sets the first snapshot.
-- `setState(patch)` merges or accepts a function, updates `currentState`, and notifies listeners.
-- `getState()` returns the snapshot.
-- `subscribe(fn)` lets you react to changes; returns an unsubscribe.
+API:
 
-`app.js` uses this to keep normalized app state in sync with inputs and to re-render query hints/title.
+- `initState(initial)` — seeds the store. Called once on startup.
+- `setState(patch)` — updates the store. `patch` can be an object or a function `(prev) => next`. Returns the new state and notifies subscribers.
+- `getState()` — returns the current snapshot.
+- `subscribe(fn)` — registers a listener, returns an `unsubscribe` function.
+- `resetState()` — clears the snapshot and listeners (used in tests).
+
+Why it’s structured this way:
+
+- We keep the inputs as the source of truth for user edits, but we also keep a normalized snapshot (handle prefixed with `@`, defaults applied) so that rendering and caching can be consistent.
+- Listeners let you react to state changes without threading callbacks through every function.
+
+Common usage in `app.js`:
+
+```js
+const initialState = normalizeAppState(getStoredState(inputs));
+initState(initialState);
+
+// Later, when an input changes:
+applyStatePatch({ handle: handleInput.value || DEFAULTS.handle });
+```
+
+`applyStatePatch` (in `app.js`) is a convenience wrapper around `setState`:
+
+```js
+function applyStatePatch(patch, { persist = true, markStale = true } = {}) {
+  const base = getStoreState() || {};
+  const merged = typeof patch === 'function' ? patch(base) : { ...base, ...patch };
+  const normalized = normalizeAppState(merged);
+  const nextState = setState(() => normalized); // <- state.js
+  if (persist) saveSettings(inputs, overrides, nextState);
+  renderQueries();
+  renderTitle();
+  if (markStale) markAllSectionsStale();
+  return nextState;
+}
+```
+
+Takeaways from this pattern:
+
+- **Normalize on every update**: All state writes go through `normalizeAppState`, so handles stay prefixed, defaults stay applied, and caches fingerprint correctly.
+- **Testing**: Use `resetState()` in tests to isolate cases; you can seed with `initState` and then call `setState` to simulate user changes.
+
+> **Note:** You can `subscribe` if you add new UI that must react to state changes, but today `app.js` calls render functions directly after `setState`. Switching existing flows to subscribers would add indirection without clear benefit right now; it becomes useful if multiple independent components need to react to the same state updates.
+
+If you add new state fields:
+
+1) Extend `DEFAULTS` in `config.js`.
+2) Update `storage` load/save/getState.
+3) Update `normalizeAppState` in `app.js`.
+4) Ensure `makeFingerprint` (storage) includes it if caches should invalidate.
+5) Use `applyStatePatch` (or `setState`) to keep normalization and persistence intact.
 
 ## Settings, notes, and cache (`docs/storage.js`)
 
