@@ -26,6 +26,14 @@ describe('getState defaults when toggle missing', () => {
     const state = getState(inputs);
     expect(state.useLabels).toBe(DEFAULTS.useLabels);
   });
+
+  it('normalizes handle and bare parts from state override paths', () => {
+    const inputs = createInputs();
+    inputs.handleInput.value = 'Alice';
+    const state = getState(inputs);
+    expect(state.handle).toBe('@Alice');
+    expect(state.handleBare).toBe('Alice');
+  });
 });
 
 describe('card and notes store setters', () => {

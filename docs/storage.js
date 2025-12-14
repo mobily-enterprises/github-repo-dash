@@ -65,7 +65,7 @@ export function loadSettings(inputs, overrides) {
   }
 }
 
-export function saveSettings(inputs, overrides) {
+export function saveSettings(inputs, overrides, stateOverride) {
   const { repoInput, driInput, coderBodyInput, coderLabelInput, handleInput, tokenInput, useLabelsInput } = inputs;
   let prev = {};
   try {
@@ -73,21 +73,81 @@ export function saveSettings(inputs, overrides) {
   } catch {
     prev = {};
   }
+  const prevRepo = (prev.repo || '').trim() || DEFAULTS.repo;
+  const prevDri = (prev.dri || '').trim() || DEFAULTS.dri;
+  const prevCoderBody = (prev.coderBodyFlag || '').trim() || DEFAULTS.coderBodyFlag;
+  const prevCoderLabel = (prev.coderLabelFlag || '').trim() || DEFAULTS.coderLabelFlag;
+  const prevHandle = normalizeHandle(prev.handle, DEFAULTS.handle);
+  const prevUseLabels =
+    typeof prev.useLabels === 'boolean' ? prev.useLabels : DEFAULTS.useLabels;
+  const repoRaw =
+    typeof stateOverride?.repo === 'string' ? stateOverride.repo : repoInput.value;
+  const repo = (repoRaw || '').toString().trim() || DEFAULTS.repo;
+  const driRaw =
+    typeof stateOverride?.driToken === 'string' ? stateOverride.driToken : driInput.value;
+  const driToken = (driRaw || '').toString().trim() || DEFAULTS.dri;
+  const coderBodyRaw =
+    typeof stateOverride?.coderBodyFlag === 'string'
+      ? stateOverride.coderBodyFlag
+      : coderBodyInput.value;
+  const coderBodyFlag = (coderBodyRaw || '').toString().trim() || DEFAULTS.coderBodyFlag;
+  const coderLabelRaw =
+    typeof stateOverride?.coderLabelFlag === 'string'
+      ? stateOverride.coderLabelFlag
+      : coderLabelInput.value;
+  const coderLabelFlag = (coderLabelRaw || '').toString().trim() || DEFAULTS.coderLabelFlag;
+  const handle = normalizeHandle(
+    typeof stateOverride?.handle === 'string' ? stateOverride.handle : handleInput.value,
+    DEFAULTS.handle
+  );
+  let useLabels = DEFAULTS.useLabels;
+  if (overrides.hasUseLabels) useLabels = prevUseLabels;
+  else if (typeof stateOverride?.useLabels === 'boolean') useLabels = stateOverride.useLabels;
+  else if (useLabelsInput) useLabels = !!useLabelsInput.checked;
+  const token = tokenInput.value.trim();
   const data = { ...prev };
-  if (!overrides.hasRepo) data.repo = repoInput.value.trim() || DEFAULTS.repo;
-  if (!overrides.hasDri) data.dri = driInput.value.trim() || DEFAULTS.dri;
-  if (!overrides.hasCoderBodyFlag) data.coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
-  if (!overrides.hasCoderLabelFlag) data.coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
-  if (!overrides.hasHandle) data.handle = normalizeHandle(handleInput.value, DEFAULTS.handle);
-  data.token = tokenInput.value.trim();
-  if (useLabelsInput) data.useLabels = !!useLabelsInput.checked;
+  if (!overrides.hasRepo) data.repo = repo;
+  if (!overrides.hasDri) data.dri = driToken;
+  if (!overrides.hasCoderBodyFlag) data.coderBodyFlag = coderBodyFlag;
+  if (!overrides.hasCoderLabelFlag) data.coderLabelFlag = coderLabelFlag;
+  if (!overrides.hasHandle) data.handle = handle;
+  data.token = token;
+  if (useLabelsInput) {
+    data.useLabels = useLabels;
+  } else if (typeof stateOverride?.useLabels === 'boolean') {
+    data.useLabels = stateOverride.useLabels;
+  } else if (overrides.hasUseLabels) {
+    data.useLabels = prevUseLabels;
+  } else {
+    data.useLabels = DEFAULTS.useLabels;
+  }
 
-  repoInput.value = data.repo || DEFAULTS.repo;
-  driInput.value = data.dri || DEFAULTS.dri;
-  coderBodyInput.value = data.coderBodyFlag || DEFAULTS.coderBodyFlag;
-  coderLabelInput.value = data.coderLabelFlag || DEFAULTS.coderLabelFlag;
-  handleInput.value = data.handle || DEFAULTS.handle;
-  tokenInput.value = data.token;
+  const repoForInput = overrides.hasRepo ? stateOverride?.repo ?? prevRepo : repo;
+  const driForInput = overrides.hasDri ? stateOverride?.driToken ?? prevDri : driToken;
+  const coderBodyForInput = overrides.hasCoderBodyFlag
+    ? stateOverride?.coderBodyFlag ?? prevCoderBody
+    : coderBodyFlag;
+  const coderLabelForInput = overrides.hasCoderLabelFlag
+    ? stateOverride?.coderLabelFlag ?? prevCoderLabel
+    : coderLabelFlag;
+  const handleForInput = overrides.hasHandle
+    ? normalizeHandle(stateOverride?.handle ?? prevHandle, DEFAULTS.handle)
+    : handle;
+  const useLabelsForInput = overrides.hasUseLabels
+    ? prevUseLabels
+    : typeof stateOverride?.useLabels === 'boolean'
+      ? stateOverride.useLabels
+      : useLabelsInput
+        ? !!useLabelsInput.checked
+        : useLabels;
+
+  repoInput.value = repoForInput;
+  driInput.value = driForInput;
+  coderBodyInput.value = coderBodyForInput;
+  coderLabelInput.value = coderLabelForInput;
+  handleInput.value = handleForInput;
+  tokenInput.value = token;
+  if (useLabelsInput) useLabelsInput.checked = !!useLabelsForInput;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   persistNotes();
 }
@@ -138,11 +198,12 @@ export function getState(inputs) {
   const repo = repoInput.value.trim() || DEFAULTS.repo;
   const driToken = driInput.value.trim() || DEFAULTS.dri;
   const handle = handleInput.value || DEFAULTS.handle;
-  const handleBare = handle.replace(/^@+/, '');
+  const normalizedHandle = normalizeHandle(handle, DEFAULTS.handle);
+  const handleBare = normalizedHandle.replace(/^@+/, '');
   const coderBodyFlag = coderBodyInput.value.trim() || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = coderLabelInput.value.trim() || DEFAULTS.coderLabelFlag;
   const useLabels = useLabelsInput ? !!useLabelsInput.checked : DEFAULTS.useLabels;
-  return { repo, driToken, handle: normalizeHandle(handle, DEFAULTS.handle), handleBare, coderBodyFlag, coderLabelFlag, useLabels };
+  return { repo, driToken, handle: normalizedHandle, handleBare, coderBodyFlag, coderLabelFlag, useLabels };
 }
 
 export function makeFingerprint(state) {
