@@ -17,7 +17,9 @@ export function markFetched() {
 function parseErrorMessage(body, fallback) {
   if (!body) return fallback;
   if (typeof body === 'string') return body;
+  if (Array.isArray(body.errors) && body.errors[0]?.message) return body.errors[0].message;
   if (body.message) return body.message;
+  if (body.documentation_url) return body.documentation_url;
   return fallback;
 }
 
