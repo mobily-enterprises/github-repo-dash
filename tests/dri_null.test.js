@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { formatDri, extractAssignee, formatAssignee } from '../docs/dri.js';
 
 describe('dri null/assignee branches', () => {

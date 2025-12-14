@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { buildQuery } from '../docs/core.js';
 import { DEFAULTS } from '../docs/config.js';
 

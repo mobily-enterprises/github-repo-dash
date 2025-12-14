@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { loadSettings, saveSettings, getState } from '../docs/storage.js';
 import { DEFAULTS } from '../docs/config.js';
 

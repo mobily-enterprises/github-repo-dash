@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { getQueryOverrides, buildQuery } from '../docs/core.js';
 import { DEFAULTS } from '../docs/config.js';
 

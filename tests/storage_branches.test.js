@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveSettings, loadSettings, getState, persistCardCache } from '../docs/storage.js';
-import { STORAGE_KEY, CARDS_CACHE_KEY } from '../docs/config.js';
+
+import { saveSettings, getState, persistCardCache } from '../docs/storage.js';
+import { STORAGE_KEY } from '../docs/config.js';
 
 function createInputs() {
   const repoInput = document.createElement('input');

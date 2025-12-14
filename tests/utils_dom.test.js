@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { createEl, setListPlaceholder, ensureAt, escapeRegExp } from '../docs/utils.js';
 
 describe('DOM helpers', () => {

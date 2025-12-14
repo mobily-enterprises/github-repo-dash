@@ -192,7 +192,10 @@ function hydrateCardsFromCache(state) {
   const cache = getCardCache();
   if (!cache?.fingerprint || cache.fingerprint !== makeFingerprint(state)) return;
   if (!isCacheFresh(cache, CARDS_CACHE_TTL_MS)) {
-    Object.keys(statusEls).forEach((section) => setStatus(section, 'Cache expired; please reload.', 'warn'));
+    Object.keys(statusEls).forEach((section) => {
+      setStatus(section, 'Cache expired; please reload.', 'warn');
+      markSectionStale(section);
+    });
     return;
   }
   const sectionHasCache = new Set();

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { loadSettings, saveSettings, makeFingerprint } from '../docs/storage.js';
 import { DEFAULTS, STORAGE_KEY, NOTES_KEY, CARDS_CACHE_KEY } from '../docs/config.js';
 

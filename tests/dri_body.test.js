@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { extractDri } from '../docs/dri.js';
 
 describe('extractDri body vs label', () => {
