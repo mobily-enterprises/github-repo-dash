@@ -73,7 +73,7 @@ loadSettings(inputs, overrides);
 config.forEach(makeCard);
 const raw = getStoredState(inputs);           // reads inputs prefilled by loadSettings/overrides
 const initialState = normalizeAppState(raw);  // adds defaults, normalizes handle/flags
-initState(initialState);                      // seeds the store
+initState(initialState);                      // seeds the app-wide state store (state.js)
 saveSettings(inputs, overrides, initialState); // re-persist normalized defaults
 renderQueries();
 renderTitle();
