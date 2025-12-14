@@ -195,21 +195,23 @@ const loadButtons = {
     // Read query params that may override inputs (and lock them).
     function getQueryOverrides() {
       const params = new URLSearchParams(window.location.search);
-      const hasRepo = params.has('repo');
-      const hasDri = params.has('dri_token');
-      const hasHandle = params.has('handle');
-      const hasCoderBodyFlag = params.has('coder_body_flag');
-      const hasCoderLabelFlag = params.has('coder_label_flag');
-      const repoParam = hasRepo ? params.get('repo') : null;
-      const driParam = hasDri ? params.get('dri_token') : null;
-      const handleParam = hasHandle ? params.get('handle') : null;
-      const coderBodyParam = hasCoderBodyFlag ? params.get('coder_body_flag') : null;
-      const coderLabelParam = hasCoderLabelFlag ? params.get('coder_label_flag') : null;
-      const repo = repoParam && repoParam.trim() ? repoParam.trim() : '';
-      const dri = driParam && driParam.trim() ? driParam.trim() : '';
-      const handle = handleParam && handleParam.trim() ? normalizeHandle(handleParam) : '';
-      const coderBodyFlag = coderBodyParam && coderBodyParam.trim() ? coderBodyParam.trim() : '';
-      const coderLabelFlag = coderLabelParam && coderLabelParam.trim() ? coderLabelParam.trim() : '';
+      const rawRepo = params.get('repo');
+      const rawDri = params.get('dri_token');
+      const rawHandle = params.get('handle');
+      const rawCoderBody = params.get('coder_body_flag');
+      const rawCoderLabel = params.get('coder_label_flag');
+
+      const repo = rawRepo && rawRepo.trim() ? rawRepo.trim() : '';
+      const dri = rawDri && rawDri.trim() ? rawDri.trim() : '';
+      const handle = rawHandle && rawHandle.trim() ? normalizeHandle(rawHandle) : '';
+      const coderBodyFlag = rawCoderBody && rawCoderBody.trim() ? rawCoderBody.trim() : '';
+      const coderLabelFlag = rawCoderLabel && rawCoderLabel.trim() ? rawCoderLabel.trim() : '';
+
+      const hasRepo = !!repo;
+      const hasDri = !!dri;
+      const hasHandle = !!handle;
+      const hasCoderBodyFlag = !!coderBodyFlag;
+      const hasCoderLabelFlag = !!coderLabelFlag;
       return {
         repo,
         dri,
