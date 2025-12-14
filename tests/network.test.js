@@ -195,6 +195,7 @@ describe('fetchLabels', () => {
   it('throws when repo is malformed', async () => {
     await expect(fetchLabels('invalid', '')).rejects.toThrow('Invalid repository for labels fetch');
     await expect(fetchLabels('/justname', '')).rejects.toThrow('Invalid repository for labels fetch');
+    await expect(fetchLabels('', '')).rejects.toThrow('Invalid repository for labels fetch');
   });
 
   it('returns empty array when payload is not an array', async () => {

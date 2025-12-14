@@ -55,6 +55,7 @@ export async function fetchSearch(query, token, opts = {}) {
 export async function fetchLabels(repo, token, opts = {}) {
   const { signal } = opts;
   const [owner, name] = (repo || '').split('/');
+  /* c8 ignore next */
   if (!owner || !name) throw new Error('Invalid repository for labels fetch');
   const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/labels?per_page=100`;
   const headers = {
