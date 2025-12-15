@@ -140,6 +140,29 @@ describe('app wiring actions', () => {
     const pullsStatus = document.getElementById('status-pulls');
     expect(pullsStatus.textContent).toContain('error');
   });
+
+  it('collapses long minus label lists in the displayed query hint only', async () => {
+    mockFetchLabels.mockResolvedValueOnce(['DRI:@a', 'DRI:@b', 'DRI:@c', 'DRI:@d']);
+    document.getElementById('reset-labels').click();
+    await flush();
+    const loadTriage = document.getElementById('load-triage');
+    loadTriage.click();
+    await flush();
+    const card = Array.from(document.querySelectorAll('.card')).find((c) =>
+      c.querySelector('h3')?.textContent.includes('no DRI')
+    );
+    const hint = card?.querySelector('.query-hint');
+    const text = hint?.textContent || '';
+    const fullQuery = hint?.title || '';
+    const negCount = (fullQuery.match(/-label:/g) || []).length;
+    const expectedHidden = Math.max(negCount - 2, 0);
+    expect(text).toContain(`…${expectedHidden} more…`);
+    expect(text.match(/‑label:/g)?.length).toBeLessThanOrEqual(2);
+    expect(fullQuery).toContain('-label:"DRI:@a"');
+    expect(fullQuery).toContain('-label:"DRI:@b"');
+    expect(fullQuery).toContain('-label:"DRI:@c"');
+    expect(fullQuery).toContain('-label:"DRI:@d"');
+  });
 });
 
 describe('label caching and reset', () => {

@@ -169,6 +169,20 @@ function setAllStatuses(text, state = '') {
   Object.keys(statusEls).forEach((section) => setStatus(section, text, state));
 }
 
+function formatQueryHint(query) {
+  // Keep minus tokens glued to their payload for readability in the hint.
+  const applyNbsp = (str) => str.replace(/ -(\S+)/g, ' \u2011$1');
+  const negLabels = [...query.matchAll(/-label:"[^"]+"/g)].map((m) => m[0]);
+  if (negLabels.length <= 2) return applyNbsp(query);
+
+  const prefix = query.replace(/-label:"[^"]+"/g, ' ').replace(/\s+/g, ' ').trim();
+  const first = negLabels[0];
+  const last = negLabels[negLabels.length - 1];
+  const hidden = negLabels.length - 2;
+  const display = [prefix, first, `(…${hidden} more…)`, last].filter(Boolean).join(' ');
+  return applyNbsp(display);
+}
+
 function buildSearchUrl(state, cfg) {
   const path = cfg.section === 'issues' ? 'issues' : 'pulls';
   const repo = state.repo || DEFAULTS.repo;
@@ -324,12 +338,14 @@ function renderQueries() {
     if (!validRepo) {
       searchLink.href = '#';
       hint.textContent = 'Enter owner/repo to build query';
+      hint.removeAttribute('title');
     } else {
       const query = buildQuery(cfg, state, { driLabels: filterDriLabelsForState(state) });
       searchLink.href = buildSearchUrl(state, cfg);
-      // Prevent breaks between the leading minus and its token (e.g., "-label:foo").
-      const renderedQuery = query.replace(/ -(\S+)/g, ' \u2011$1');
+      // Prevent breaks between the leading minus and its token (e.g., "-label:foo") and collapse long label lists.
+      const renderedQuery = formatQueryHint(query);
       hint.textContent = renderedQuery;
+      hint.title = query;
     }
   });
 }
