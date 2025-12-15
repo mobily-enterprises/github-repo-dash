@@ -3,12 +3,19 @@ import { describe, it, expect } from 'vitest';
 import { extractDri } from '../docs/dri.js';
 
 describe('extractDri body vs label', () => {
-  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'op_mia' };
+  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'op_mia', useBodyText: true };
 
   it('finds DRI in body', () => {
     const item = { user: { login: 'bob' }, body: 'Hello DRI:@alice', labels: [] };
     const dri = extractDri(item, baseOpts);
     expect(dri.handle).toBe('@alice');
+  });
+
+  it('falls back to labels when body search is enabled but missing DRI', () => {
+    const item = { user: { login: 'bob' }, body: 'no dri here', labels: [{ name: 'DRI:@alice' }] };
+    const dri = extractDri(item, baseOpts);
+    expect(dri.handle).toBe('@alice');
+    expect(dri.role).toBe('review');
   });
 
   it('returns not found when absent', () => {

@@ -130,7 +130,7 @@ describe('dri formatting branches', () => {
 
   it('skips coder label check when labels are missing', () => {
     const item = { body: 'DRI:@bob', user: { login: 'charlie' } };
-    const dri = extractDri(item);
+    const dri = extractDri(item, { useBodyText: true });
     expect(dri.handle).toBe('@bob');
   });
 
