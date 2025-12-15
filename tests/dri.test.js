@@ -22,6 +22,13 @@ describe('extractDri', () => {
     const dri = extractDri(item, baseOpts);
     expect(dri.role).toBe('code');
   });
+
+  it('ignores body flags when useBodyText is false', () => {
+    const item = { user: { login: 'someone' }, body: 'DRI:@alice coder', labels: [{ name: 'DRI:@alice' }] };
+    const dri = extractDri(item, { ...baseOpts, useBodyText: false });
+    expect(dri.handle).toBe('@alice');
+    expect(dri.role).toBe('review');
+  });
 });
 
 describe('format helpers', () => {

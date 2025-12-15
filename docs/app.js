@@ -422,7 +422,8 @@ function renderItems(cardState, items, state) {
             extractDri(item, {
               driToken: state?.driToken,
               coderBodyFlag: state?.coderBodyFlag,
-              coderLabelFlag: state?.coderLabelFlag
+              coderLabelFlag: state?.coderLabelFlag,
+              useBodyText: !!state?.useBodyText
             }),
             state?.handle
           )

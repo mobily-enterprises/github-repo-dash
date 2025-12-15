@@ -5,11 +5,12 @@ export function extractDri(item, opts = {}) {
   const driToken = opts.driToken || DEFAULTS.dri;
   const coderBodyFlag = opts.coderBodyFlag || DEFAULTS.coderBodyFlag;
   const coderLabelFlag = opts.coderLabelFlag || DEFAULTS.coderLabelFlag;
+  const useBodyText = typeof opts.useBodyText === 'boolean' ? opts.useBodyText : DEFAULTS.useBodyText;
   const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
 
   let match = null;
 
-  if (item?.body) {
+  if (useBodyText && item?.body) {
     const bodyMatch = item.body.match(regex);
     if (bodyMatch) match = bodyMatch;
   }
@@ -37,6 +38,7 @@ export function extractDri(item, opts = {}) {
     const handleBareEsc = escapeRegExp(handleBare);
     const coderFromAuthor = author && handleBare && author === handleBare;
     const coderFromBody =
+      useBodyText &&
       coderBodyFlag &&
       item?.body &&
       new RegExp(`${driTokenEsc}\\s*@?${handleBareEsc}\\s+${escapeRegExp(coderBodyFlag)}`, 'i').test(item.body);
