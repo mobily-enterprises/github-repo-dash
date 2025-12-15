@@ -43,7 +43,7 @@ describe('buildQuery template selection and DRI label expansions', () => {
     expect(empty).not.toContain('-label');
 
     const multi = buildQuery(cfg, baseState, { driLabels: ['DRI:@a', 'DRI:@b'] });
-    expect(multi).toContain('(label:"DRI:@a" OR label:"DRI:@b")');
+    expect(multi).toContain('label:"DRI:@a","DRI:@b"');
     expect(multi).toContain('-label:"DRI:@a"');
     expect(multi).toContain('-label:"DRI:@b"');
   });

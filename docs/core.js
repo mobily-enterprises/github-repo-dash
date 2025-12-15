@@ -18,9 +18,7 @@ export function buildQuery(cfg, state, opts = {}) {
   const driLabelsOr =
     driLabels.length === 0
       ? 'label:"__none__"'
-      : driLabels.length === 1
-        ? `label:"${escapeLabelValue(driLabels[0])}"`
-        : `(${driLabels.map((label) => `label:"${escapeLabelValue(label)}"`).join(' OR ')})`;
+      : `label:${driLabels.map((label) => `"${escapeLabelValue(label)}"`).join(',')}`;
   const driLabelsNot =
     driLabels.length === 0
       ? ''
