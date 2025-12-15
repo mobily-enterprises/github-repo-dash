@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { config } from '../docs/config.js';
+import { config, DRI_LABELS_CACHE_KEY, DRI_LABELS_CACHE_TTL_MS } from '../docs/config.js';
 
 vi.mock('../docs/utils.js', async () => {
   const actual = await vi.importActual('../docs/utils.js');
@@ -139,5 +139,76 @@ describe('app wiring actions', () => {
     await flush();
     const pullsStatus = document.getElementById('status-pulls');
     expect(pullsStatus.textContent).toContain('error');
+  });
+});
+
+describe('label caching and reset', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    mockFetchSearch.mockClear();
+    mockFetchLabels.mockClear();
+    localStorage.clear();
+    setupDom();
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({}),
+      text: async () => '',
+      headers: new Headers()
+    }));
+  });
+
+  it('uses cached labels when still fresh', async () => {
+    const repo = 'owner/repo';
+    localStorage.setItem(
+      DRI_LABELS_CACHE_KEY,
+      JSON.stringify({ repo, labels: ['DRI:@cached'], cachedAt: Date.now() })
+    );
+    const repoInput = document.getElementById('repo');
+    repoInput.value = repo;
+    repoInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await import('../docs/app.js');
+    await flush();
+    document.getElementById('load-pulls').click();
+    await flush();
+    expect(mockFetchLabels).not.toHaveBeenCalled();
+  });
+
+  it('refetches labels when cache is stale', async () => {
+    const repo = 'owner/repo';
+    localStorage.setItem(
+      DRI_LABELS_CACHE_KEY,
+      JSON.stringify({
+        repo,
+        labels: ['DRI:@stale'],
+        cachedAt: Date.now() - DRI_LABELS_CACHE_TTL_MS - 1000
+      })
+    );
+    const repoInput = document.getElementById('repo');
+    repoInput.value = repo;
+    repoInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await import('../docs/app.js');
+    await flush();
+    document.getElementById('load-pulls').click();
+    await flush();
+    expect(mockFetchLabels).toHaveBeenCalledTimes(1);
+  });
+
+  it('reset labels button clears cache and triggers fetch', async () => {
+    const repo = 'owner/repo';
+    localStorage.setItem(
+      DRI_LABELS_CACHE_KEY,
+      JSON.stringify({ repo, labels: ['DRI:@cached'], cachedAt: Date.now() })
+    );
+    const repoInput = document.getElementById('repo');
+    repoInput.value = repo;
+    repoInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await import('../docs/app.js');
+    await flush();
+    mockFetchLabels.mockClear();
+    const resetBtn = document.getElementById('reset-labels');
+    resetBtn.click();
+    await flush();
+    expect(mockFetchLabels).toHaveBeenCalledTimes(1);
   });
 });
