@@ -169,6 +169,32 @@ function setAllStatuses(text, state = '') {
   Object.keys(statusEls).forEach((section) => setStatus(section, text, state));
 }
 
+function formatQueryHint(query) {
+  // Keep minus tokens glued to their payload for readability in the hint.
+  const applyNbsp = (str) => str.replace(/ -(\S+)/g, ' \u2011$1');
+
+  let rendered = query;
+
+  // Collapse positive label lists (label:"a","b","c").
+  rendered = rendered.replace(/label:"[^"]+"(?:,"[^"]+")+/g, (match) => {
+    const labels = [...match.matchAll(/"([^"]+)"/g)].map((m) => `label:"${m[1]}"`);
+    if (labels.length <= 2) return match;
+    return `${labels[0]} (...${labels.length - 2} more...) ${labels[labels.length - 1]}`;
+  });
+
+  // Collapse negative label sequences.
+  const negLabels = [...rendered.matchAll(/-label:"[^"]+"/g)].map((m) => m[0]);
+  if (negLabels.length > 2) {
+    const prefix = rendered.replace(/-label:"[^"]+"/g, ' ').replace(/\s+/g, ' ').trim();
+    const hidden = negLabels.length - 2;
+    rendered = [prefix, negLabels[0], `(…${hidden} more…)`, negLabels[negLabels.length - 1]]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  return applyNbsp(rendered);
+}
+
 function buildSearchUrl(state, cfg) {
   const path = cfg.section === 'issues' ? 'issues' : 'pulls';
   const repo = state.repo || DEFAULTS.repo;
@@ -324,12 +350,14 @@ function renderQueries() {
     if (!validRepo) {
       searchLink.href = '#';
       hint.textContent = 'Enter owner/repo to build query';
+      hint.removeAttribute('title');
     } else {
       const query = buildQuery(cfg, state, { driLabels: filterDriLabelsForState(state) });
       searchLink.href = buildSearchUrl(state, cfg);
-      // Prevent breaks between the leading minus and its token (e.g., "-label:foo").
-      const renderedQuery = query.replace(/ -(\S+)/g, ' \u2011$1');
+      // Prevent breaks between the leading minus and its token (e.g., "-label:foo") and collapse long label lists.
+      const renderedQuery = formatQueryHint(query);
       hint.textContent = renderedQuery;
+      hint.title = query;
     }
   });
 }
