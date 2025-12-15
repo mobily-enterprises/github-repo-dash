@@ -15,9 +15,9 @@ Welcome! This guide walks you through the codebase so you can confidently make c
 The dashboard assumes every PR/issue has a **Directly Responsible Individual (DRI)** and exactly one **assignee** (the person currently working it). The DRI can play two roles:
 
 - **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author and there is no coder flag.
-- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA) via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
+- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA) via a body flag like `DRI:@alice coder` or a label like `op_mia`.
 
-Labels typically look like `DRI:@maintainer1`, `DRI_is_coder`, etc. There is always exactly one assignee at a time; the assignee “bounces” between coder and reviewer as work changes hands.
+Labels typically look like `DRI:@maintainer1`, `op_mia`, etc. There is always exactly one assignee at a time; the assignee “bounces” between coder and reviewer as work changes hands.
 
 ## High-level architecture (read this once)
 
@@ -235,7 +235,7 @@ export function getState(inputs) {
 Key logic:
 
 - If the handle matches the author, role becomes `code`.
-- If the body has `DRI:@alice coder` (body flag) or labels include `DRI_is_coder` (label flag), role becomes `code`.
+- If the body has `DRI:@alice coder` (body flag) or labels include `op_mia` (label flag), role becomes `code`.
 - Otherwise role stays `review`.
 
 Formatting helpers:
@@ -382,7 +382,7 @@ Edit `DEFAULTS` in `config.js` (e.g., change `coderBodyFlag` or `coderLabelFlag`
 - `?repo=owner/repo` — prefill/lock repo.
 - `&handle=@you` — prefill/lock handle.
 - `&dri_token=DRI:@` — override token prefix.
-- `&coder_body_flag=coder` / `&coder_label_flag=DRI_is_coder` — override flags.
+- `&coder_body_flag=coder` / `&coder_label_flag=op_mia` — override flags.
 - `&use_body_text=true|false` — toggle body vs labels (true = look in body; false = labels).
 
 Locked fields are disabled in the UI; saved settings will not override them.

@@ -15,10 +15,10 @@ This dashboard is built around a DRI (Directly Responsible Individual) model:
 - Every PR/issue has a **DRI**.
 - The DRI plays one of two roles:
   - **Reviewer** (most common): expected to review and shepherd the change. This is the default when the DRI is not the author and there’s no coder flag.
-  - **Coder** (only when it’s truly theirs to code): expected to write the code. The DRI becomes the coder only if they are the PR author, or if they are explicitly forced into coder mode (e.g., the author is MIA) via a body flag like `DRI:@alice coder` or a label like `DRI_is_coder`.
+- **Coder** (only when it’s truly theirs to code): expected to write the code. The DRI becomes the coder only if they are the PR author, or if they are explicitly forced into coder mode (e.g., the author is MIA) via a body flag like `DRI:@alice coder` or a label like `op_mia`.
 - There is always exactly **one assignee** at any time—the person currently working the item. The assignee “bounces” between coder and reviewer as ownership changes.
 
-In practice, with labels, you’ll see labels like `DRI:@maintainer1`, `DRI:@maintainer2`, etc., to declare the DRI. The optional `DRI_is_coder` label or a `coder` flag in the body marks the DRI as the coder even if they’re not the author.
+In practice, with labels, you’ll see labels like `DRI:@maintainer1`, `DRI:@maintainer2`, etc., to declare the DRI. The optional `op_mia` label or a `coder` flag in the body marks the DRI as the coder even if they’re not the author.
 
 ## What you see on first load
 
@@ -30,7 +30,7 @@ Open `docs/index.html` via a local server (e.g., `npm run serve` then http://loc
 - **Load buttons** for Pulls, Triage, Issues sections.
 - **Cards** are not loaded yet; status reads “Not loaded”.
 
-By default, the dashboard searches **labels** for DRI (and coder flag) tokens. It expects labels like `DRI:@alice` and coder labels like `DRI_is_coder`. The DRI token text (`DRI:@`) and coder flag texts are configurable.
+By default, the dashboard searches **labels** for DRI (and coder flag) tokens. It expects labels like `DRI:@alice` and coder labels like `op_mia`. The DRI token text (`DRI:@`) and coder flag texts are configurable.
 
 ## Core cards and queries (defaults: labels)
 
@@ -52,7 +52,7 @@ Each query is prefixed with `repo:<owner/repo>` once you enter a valid repo.
 
 ### Toggle: “Look in body for DRI:@… and coder flags (off = labels)”
 
-- Default: **off** → searches use labels (`label:"DRI:@user"` and `DRI_is_coder`).
+- Default: **off** → searches use labels (`label:"DRI:@user"` and `op_mia`).
 - When **on**: searches use body text (`in:body "DRI:@user"` and body `coder` flag).
 - Changing this toggle marks all cards stale; reload to re-run searches with the new source.
 
@@ -63,7 +63,7 @@ When rendering items, the dashboard extracts DRI and coder/reviewer role:
 - DRI comes from the selected source (labels by default, or body if toggled).
 - DRI is the **coder** only if:
   - The DRI handle matches the author, or
-  - You explicitly force coder mode with `coder` in the body near the DRI token, or a coder label (`DRI_is_coder`).
+  - You explicitly force coder mode with `coder` in the body near the DRI token, or a coder label (`op_mia`).
 - Otherwise, the DRI is the **reviewer** (the common case).
 - Assignee line shows who’s currently assigned; if you’re involved, hints like “(pls code)” or “(pls review)” appear.
 - Notes: each item has a local note field with a red “!” toggle, stored in localStorage per repo+item.
@@ -74,7 +74,7 @@ When rendering items, the dashboard extracts DRI and coder/reviewer role:
 - **Handle**: normalized to start with `@`.
 - **Token**: optional PAT; stored in localStorage; “×” clears and removes it.
 - **DRI token**: default `DRI:@`; used in queries and extraction.
-- **Coder flags**: body flag `coder`, label flag `DRI_is_coder`; both configurable.
+- **Coder flags**: body flag `coder`, label flag `op_mia`; both configurable.
 - **DRI source toggle**: labels vs body; persisted in settings.
 - Settings, notes, and card cache are in localStorage; query params can override and lock fields (including `use_body_text=true/false`).
 
@@ -95,7 +95,7 @@ You can prefill and lock fields via query params:
 - `&handle=@you`
 - `&dri_token=DRI:@`
 - `&coder_body_flag=coder`
-- `&coder_label_flag=DRI_is_coder`
+- `&coder_label_flag=op_mia`
 - `&use_body_text=true|false` (true = look in body; false = labels)
 
 Locked fields become disabled in the UI.

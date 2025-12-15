@@ -54,7 +54,7 @@ describe('core coverage bumps', () => {
       handle: '@me',
       handleBare: 'me',
       coderBodyFlag: 'coder',
-      coderLabelFlag: 'DRI_is_coder',
+      coderLabelFlag: 'op_mia',
       useBodyText: true
     };
     const query = buildQuery(cfg, state);

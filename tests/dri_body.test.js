@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { extractDri } from '../docs/dri.js';
 
 describe('extractDri body vs label', () => {
-  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'DRI_is_coder' };
+  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'op_mia' };
 
   it('finds DRI in body', () => {
     const item = { user: { login: 'bob' }, body: 'Hello DRI:@alice', labels: [] };
