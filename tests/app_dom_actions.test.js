@@ -163,6 +163,24 @@ describe('app wiring actions', () => {
     expect(fullQuery).toContain('-label:"DRI:@c"');
     expect(fullQuery).toContain('-label:"DRI:@d"');
   });
+
+  it('collapses long positive label lists in the displayed query hint only', async () => {
+    mockFetchLabels.mockResolvedValueOnce(['DRI:@a', 'DRI:@b', 'DRI:@c', 'DRI:@d']);
+    document.getElementById('reset-labels').click();
+    await flush();
+    const loadTriage = document.getElementById('load-triage');
+    loadTriage.click();
+    await flush();
+    const card = Array.from(document.querySelectorAll('.card')).find((c) =>
+      c.querySelector('h3')?.textContent.includes('with a DRI')
+    );
+    const hint = card?.querySelector('.query-hint');
+    const text = hint?.textContent || '';
+    const fullQuery = hint?.title || '';
+    expect(text).toContain('(...2 more...)');
+    expect(text.match(/label:/g)?.length).toBeLessThanOrEqual(2);
+    expect(fullQuery).toContain('label:"DRI:@a","DRI:@b","DRI:@c","DRI:@d"');
+  });
 });
 
 describe('label caching and reset', () => {

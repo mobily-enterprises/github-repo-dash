@@ -71,7 +71,7 @@ export const config = [
     tone: 'warn',
     title: 'Open PRs with no DRI',
     desc: 'PR body does not declare a DRI. Unowned.',
-    queryUsingLabels: 'is:pr is:open -label:"DRI:@__HANDLE_BARE__" __DRI_LABELS_NOT__',
+    queryUsingLabels: 'is:pr is:open __DRI_LABELS_NOT__',
     queryUsingBodyText: 'is:pr is:open NOT in:body "__DRI__"',
   },
   {
