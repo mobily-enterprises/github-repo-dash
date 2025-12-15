@@ -269,7 +269,9 @@ function renderQueries() {
     } else {
       const query = buildQuery(cfg, state, { driLabels: filterDriLabelsForState(state) });
       searchLink.href = buildSearchUrl(state, cfg);
-      hint.textContent = query;
+      // Prevent breaks between the leading minus and its token (e.g., "-label:foo").
+      const renderedQuery = query.replace(/ -(\S+)/g, ' \u2011$1');
+      hint.textContent = renderedQuery;
     }
   });
 }
