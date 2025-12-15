@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { extractDri, formatDri, formatAssignee } from '../docs/dri.js';
 
 describe('extractDri', () => {
-  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'DRI_is_coder' };
+  const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'op_mia' };
 
   it('finds DRI in labels and marks reviewer by default', () => {
     const item = { user: { login: 'bob' }, labels: [{ name: 'DRI:@alice' }] };
@@ -18,7 +18,7 @@ describe('extractDri', () => {
   });
 
   it('marks coder when coder label is present', () => {
-    const item = { user: { login: 'charlie' }, labels: [{ name: 'DRI:@alice' }, { name: 'DRI_is_coder' }] };
+    const item = { user: { login: 'charlie' }, labels: [{ name: 'DRI:@alice' }, { name: 'op_mia' }] };
     const dri = extractDri(item, baseOpts);
     expect(dri.role).toBe('code');
   });

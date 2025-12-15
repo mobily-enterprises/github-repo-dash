@@ -112,7 +112,7 @@ export const DEFAULTS = {
   handle: '@me',
   token: '',
   coderBodyFlag: 'coder',
-  coderLabelFlag: 'DRI_is_coder',
+  coderLabelFlag: 'op_mia',
   useBodyText: false
 };
 
