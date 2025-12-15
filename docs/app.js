@@ -7,7 +7,9 @@ import {
   SEARCH_DELAY_MS,
   NO_TOKEN_DELAY_MS,
   CARDS_CACHE_TTL_MS,
-  REPO_REGEX
+  REPO_REGEX,
+  DRI_LABELS_CACHE_KEY,
+  DRI_LABELS_CACHE_TTL_MS
 } from './config.js';
 import { sleep, createEl, setListPlaceholder, isValidRepo, normalizeHandle } from './utils.js';
 import { extractDri, formatDri, extractAssignee, formatAssignee } from './dri.js';
@@ -35,6 +37,7 @@ const coderLabelInput = document.getElementById('coder-label-flag');
 const handleInput = document.getElementById('handle');
 const tokenInput = document.getElementById('token');
 const clearTokenBtn = document.getElementById('clear-token');
+const resetLabelsBtn = document.getElementById('reset-labels');
 const useBodyTextInput = document.getElementById('use-body-text');
 const loadButtons = {
   pulls: document.getElementById('load-pulls'),
@@ -60,6 +63,47 @@ let driLabelsRepo = '';
 let driLabels = [];
 let driLabelsPromise = null;
 
+function loadCachedDriLabels(repo) {
+  if (!repo) return null;
+  try {
+    const raw = localStorage.getItem(DRI_LABELS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.repo === repo && Array.isArray(parsed.labels)) {
+      const age = Date.now() - (parsed.cachedAt || 0);
+      if (parsed.cachedAt && age <= DRI_LABELS_CACHE_TTL_MS) return parsed.labels;
+    }
+  } catch {
+    /* ignore cache read errors */
+  }
+  return null;
+}
+
+function persistDriLabels(repo, labels) {
+  if (!repo || !Array.isArray(labels)) return;
+  try {
+    localStorage.setItem(DRI_LABELS_CACHE_KEY, JSON.stringify({ repo, labels, cachedAt: Date.now() }));
+  } catch {
+    /* ignore cache write errors */
+  }
+}
+
+function clearDriLabelCacheForRepo(repo) {
+  if (!repo) return;
+  try {
+    const raw = localStorage.getItem(DRI_LABELS_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed?.repo === repo) localStorage.removeItem(DRI_LABELS_CACHE_KEY);
+  } catch {
+    /* ignore cache clear errors */
+  }
+  if (repo === driLabelsRepo) {
+    driLabelsRepo = '';
+    driLabels = [];
+    driLabelsPromise = null;
+  }
+}
+
 function normalizeAppState(next) {
   const repo = (next.repo || '').trim() || DEFAULTS.repo;
   const driToken = (next.driToken || '').trim() || DEFAULTS.dri;
@@ -82,6 +126,15 @@ async function ensureDriLabels(repo, token) {
     driLabelsPromise = null;
     return [];
   }
+  if (repo !== driLabelsRepo) {
+    const cached = loadCachedDriLabels(repo);
+    if (cached) {
+      driLabelsRepo = repo;
+      driLabels = cached;
+      driLabelsPromise = Promise.resolve(cached);
+      return driLabelsPromise;
+    }
+  }
   if (repo === driLabelsRepo && driLabelsPromise) return driLabelsPromise;
   if (repo === driLabelsRepo && !driLabelsPromise) return Promise.resolve(driLabels);
 
@@ -90,6 +143,7 @@ async function ensureDriLabels(repo, token) {
     .then((names) => {
       driLabels = names;
       driLabelsPromise = Promise.resolve(names);
+      persistDriLabels(repo, names);
       return names;
     })
     .catch((err) => {
@@ -109,6 +163,10 @@ function setStatus(section, text, state = '') {
   if (!el) return;
   el.textContent = text;
   el.dataset.state = state;
+}
+
+function setAllStatuses(text, state = '') {
+  Object.keys(statusEls).forEach((section) => setStatus(section, text, state));
 }
 
 function buildSearchUrl(state, cfg) {
@@ -458,6 +516,24 @@ function init() {
     markAllSectionsStale();
   };
 
+  const resetLabels = async () => {
+    const state = getStoreState();
+    const repo = state?.repo || '';
+    clearDriLabelCacheForRepo(repo);
+    renderQueries();
+    if (!isValidRepo(repo, REPO_REGEX)) {
+      setAllStatuses('Enter a repository (owner/repo) to reload labels.', 'warn');
+      return;
+    }
+    try {
+      await ensureDriLabels(repo, tokenInput.value.trim());
+      renderQueries();
+      setAllStatuses('Labels refreshed.', 'ok');
+    } catch (err) {
+      setAllStatuses(err?.message || 'Failed to reload labels', 'error');
+    }
+  };
+
   if (clearTokenBtn) {
     clearTokenBtn.addEventListener('click', () => {
       tokenInput.value = '';
@@ -496,6 +572,9 @@ function init() {
     useBodyTextInput.addEventListener('change', () =>
       applyStatePatch({ useBodyText: !!useBodyTextInput.checked })
     );
+  }
+  if (resetLabelsBtn) {
+    resetLabelsBtn.addEventListener('click', resetLabels);
   }
 
   Object.entries(loadButtons).forEach(([section, btn]) => {

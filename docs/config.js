@@ -121,5 +121,7 @@ export const NO_TOKEN_DELAY_MS = 10000;
 export const STORAGE_KEY = `knexRepoDashSettings:${window.location.origin}${window.location.pathname}${window.location.hash}`;
 export const NOTES_KEY = `${STORAGE_KEY}:notes`;
 export const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
+export const DRI_LABELS_CACHE_KEY = `${STORAGE_KEY}:driLabels`;
 export const REPO_REGEX = /^[^/\s]+\/[^/\s]+$/;
 export const CARDS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+export const DRI_LABELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
