@@ -123,5 +123,5 @@ export const NOTES_KEY = `${STORAGE_KEY}:notes`;
 export const CARDS_CACHE_KEY = `${STORAGE_KEY}:cardsCache`;
 export const DRI_LABELS_CACHE_KEY = `${STORAGE_KEY}:driLabels`;
 export const REPO_REGEX = /^[^/\s]+\/[^/\s]+$/;
-export const CARDS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+export const CARDS_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 export const DRI_LABELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
