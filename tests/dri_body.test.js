@@ -25,6 +25,20 @@ describe('extractDri body vs label', () => {
     expect(dri.role).toBe('review');
   });
 
+  it('treats missing body as not MIA when DRI is in labels', () => {
+    const item = { user: { login: 'bob' }, labels: [{ name: 'DRI:@alice' }] };
+    const dri = extractDri(item, baseOpts);
+    expect(dri.handle).toBe('@alice');
+    expect(dri.role).toBe('review');
+  });
+
+  it('ignores empty DRI handle when checking MIA body flag', () => {
+    const item = { user: { login: 'bob' }, body: 'DRI:@@ coder', labels: [] };
+    const dri = extractDri(item, baseOpts);
+    expect(dri.handle).toBe('@');
+    expect(dri.role).toBe('review');
+  });
+
   it('marks coder via body flag even if not author', () => {
     const item = { user: { login: 'charlie' }, body: 'DRI:@alice coder', labels: [] };
     const dri = extractDri(item, baseOpts);

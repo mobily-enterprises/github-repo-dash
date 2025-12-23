@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { extractDri, formatDri, formatAssignee } from '../docs/dri.js';
+import { extractDri, formatDri, formatAssignee, resolveCoderHandle } from '../docs/dri.js';
 
 const baseOpts = { driToken: 'DRI:@', coderBodyFlag: 'coder', coderLabelFlag: 'op_mia' };
 
@@ -43,5 +43,21 @@ describe('format helpers', () => {
     const state = { handle: '@alice' };
     const text = formatAssignee(item, dri, state, { includeActionForYou: true });
     expect(text).toContain('pls code');
+  });
+});
+
+describe('resolveCoderHandle', () => {
+  it('returns DRI handle when author is MIA', () => {
+    const item = { user: { login: 'bob' }, labels: [{ name: 'DRI:@alice' }, { name: 'op_mia' }] };
+    const dri = extractDri(item, baseOpts);
+    const handle = resolveCoderHandle(item, dri, baseOpts);
+    expect(handle).toBe('@alice');
+  });
+
+  it('returns not found when author is MIA but DRI is missing', () => {
+    const item = { user: { login: 'bob' }, labels: [{ name: 'op_mia' }] };
+    const dri = extractDri(item, baseOpts);
+    const handle = resolveCoderHandle(item, dri, baseOpts);
+    expect(handle).toBe('not found');
   });
 });
