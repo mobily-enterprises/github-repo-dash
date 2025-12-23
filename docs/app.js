@@ -12,7 +12,7 @@ import {
   DRI_LABELS_CACHE_TTL_MS
 } from './config.js';
 import { sleep, createEl, setListPlaceholder, isValidRepo, normalizeHandle } from './utils.js';
-import { extractDri, formatDri, extractAssignee, formatAssignee } from './dri.js';
+import { extractDri, formatDri, extractAssignee, formatAssignee, resolveCoderHandle } from './dri.js';
 import {
   loadSettings,
   saveSettings,
@@ -220,13 +220,13 @@ function addTopMetaLines(cardState, item, state, li) {
     if (formatted) {
       let line = formatted;
       if (dri) {
-        const youHandle = (state?.handle || '').toLowerCase();
-        const driHandle = (dri.handle || '').toLowerCase();
-        const isYou = youHandle && driHandle && youHandle === driHandle;
+        const coderHandle = resolveCoderHandle(item, dri, state);
+        const coderBare =
+          coderHandle && coderHandle !== 'not found' ? coderHandle.replace(/^@+/, '').toLowerCase() : '';
+        const youBare = (state?.handle || '').replace(/^@+/, '').toLowerCase();
         let action = '';
-        if (dri.role === 'code') action = isYou ? 'pls code' : 'pls review';
-        else if (dri.role === 'review') action = isYou ? 'pls review' : 'pls code';
-        line = `${formatted} (${action})`;
+        if (coderBare && youBare) action = coderBare === youBare ? 'pls code' : 'pls review';
+        if (action) line = `${formatted} (${action})`;
       }
       lines.push(line);
     }

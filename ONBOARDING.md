@@ -14,8 +14,8 @@ Welcome! This guide walks you through the codebase so you can confidently make c
 
 The dashboard assumes every PR/issue has a **Directly Responsible Individual (DRI)** and exactly one **assignee** (the person currently working it). The DRI can play two roles:
 
-- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author and there is no coder flag.
-- **Coder** (only when it’s truly theirs to code): happens when the DRI is the author **or** is explicitly forced into coder mode (e.g., author is MIA) via a body flag like `DRI:@alice coder` or a label like `op_mia`.
+- **Reviewer** (most common): expected to review/shepherd. This is the default when the DRI is not the author and the author is not MIA.
+- **Coder**: the coder is always the author unless the author is MIA; if the author is MIA, the DRI becomes the coder.
 
 Labels typically look like `DRI:@maintainer1`, `op_mia`, etc. There is always exactly one assignee at a time; the assignee “bounces” between coder and reviewer as work changes hands.
 
@@ -230,18 +230,18 @@ export function getState(inputs) {
 
 ## DRI and assignee parsing (`docs/dri.js`)
 
-`extractDri(item, opts)` looks for a DRI token in the body first, then labels, using the configured token (`DRI:@`) and coder flags. It returns `{ handle, role }` where `role` is `'code'` or `'review'`.
+`extractDri(item, opts)` looks for a DRI token in the body first, then labels, using the configured token (`DRI:@`) and coder/MIA flags. It returns `{ handle, role }` where `role` is `'code'` or `'review'`.
 
 Key logic:
 
-- If the handle matches the author, role becomes `code`.
-- If the body has `DRI:@alice coder` (body flag) or labels include `op_mia` (label flag), role becomes `code`.
+- If the author is MIA (body `coder` flag or `op_mia` label), the DRI role becomes `code`.
+- If the author is not MIA, the DRI role is `code` only when the DRI matches the author.
 - Otherwise role stays `review`.
 
 Formatting helpers:
 
 - `formatDri(dri, youHandle)` → `DRI (coder): you`
-- `extractAssignee(item)` / `formatAssignee(item, dri, state, { includeActionForYou })` add hints like `(pls code)` when you’re the assignee and the role implies action.
+- `extractAssignee(item)` / `formatAssignee(item, dri, state, { includeActionForYou })` add hints like `(pls code)` when you’re the assignee and you are the coder (author unless MIA; DRI if MIA).
 
 ## Network and rate limiting (`docs/network.js`)
 
@@ -315,7 +315,7 @@ Inputs call `applyStatePatch({ field: value })`, which:
 
 The “clear token” button empties the token field and triggers the same flow.
 
-### Toggle: “Look in body for DRI:@… and coder flags (off = labels)”
+### Toggle: “Look in body for DRI:@… and MIA flags (off = labels)”
 
 - When changed, state updates and **all cards are marked stale** because queries change.
 - Persisted in localStorage; can also be forced via `?use_body_text=true|false`.

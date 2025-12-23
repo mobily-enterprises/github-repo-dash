@@ -1,13 +1,15 @@
 import { DEFAULTS } from './config.js';
 import { ensureAt, escapeRegExp } from './utils.js';
 
-export function extractDri(item, opts = {}) {
-  const driToken = opts.driToken || DEFAULTS.dri;
-  const coderBodyFlag = opts.coderBodyFlag || DEFAULTS.coderBodyFlag;
-  const coderLabelFlag = opts.coderLabelFlag || DEFAULTS.coderLabelFlag;
-  const useBodyText = typeof opts.useBodyText === 'boolean' ? opts.useBodyText : DEFAULTS.useBodyText;
-  const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
+const normalizeDriOpts = (opts = {}) => ({
+  driToken: opts.driToken || DEFAULTS.dri,
+  coderBodyFlag: opts.coderBodyFlag || DEFAULTS.coderBodyFlag,
+  coderLabelFlag: opts.coderLabelFlag || DEFAULTS.coderLabelFlag,
+  useBodyText: typeof opts.useBodyText === 'boolean' ? opts.useBodyText : DEFAULTS.useBodyText
+});
 
+const findDriMatch = (item, { driToken, useBodyText }) => {
+  const regex = new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i');
   let match = null;
 
   if (useBodyText && item?.body) {
@@ -26,32 +28,51 @@ export function extractDri(item, opts = {}) {
     }
   }
 
+  return match;
+};
+
+const hasCoderLabelFlag = (item, coderLabelFlag) => {
+  if (!coderLabelFlag || !Array.isArray(item?.labels)) return false;
+  const labelRegex = new RegExp(escapeRegExp(coderLabelFlag), 'i');
+  return item.labels.some((label) => {
+    const name = label?.name || '';
+    if (!name) return false;
+    return labelRegex.test(name);
+  });
+};
+
+const hasCoderBodyFlag = (item, { driToken, coderBodyFlag }) => {
+  if (!coderBodyFlag || !item?.body) return false;
+  const match = item.body.match(new RegExp(`${escapeRegExp(driToken)}\\s*([^\\s]+)`, 'i'));
+  const handle = ensureAt(match?.[1]);
+  if (handle === 'not found') return false;
+  const handleBare = handle.replace(/^@+/, '');
+  if (!handleBare) return false;
+  const driTokenEsc = escapeRegExp(driToken);
+  const handleBareEsc = escapeRegExp(handleBare);
+  return new RegExp(`${driTokenEsc}\\s*@?${handleBareEsc}\\s+${escapeRegExp(coderBodyFlag)}`, 'i').test(item.body);
+};
+
+const isAuthorMia = (item, opts = {}) => {
+  const { driToken, coderBodyFlag, coderLabelFlag, useBodyText } = normalizeDriOpts(opts);
+  const fromLabel = hasCoderLabelFlag(item, coderLabelFlag);
+  const fromBody = useBodyText ? hasCoderBodyFlag(item, { driToken, coderBodyFlag }) : false;
+  return fromLabel || fromBody;
+};
+
+export function extractDri(item, opts = {}) {
+  const normalized = normalizeDriOpts(opts);
+  const match = findDriMatch(item, normalized);
+
   const handle = ensureAt(match?.[1]);
   if (!match) return { handle, role: 'review' };
 
   const author = (item?.user?.login || '').toLowerCase();
   const handleBare = handle.replace(/^@+/, '').toLowerCase();
 
-  let role = 'review';
-  if (handle !== 'not found') {
-    const driTokenEsc = escapeRegExp(driToken);
-    const handleBareEsc = escapeRegExp(handleBare);
-    const coderFromAuthor = author && handleBare && author === handleBare;
-    const coderFromBody =
-      useBodyText &&
-      coderBodyFlag &&
-      item?.body &&
-      new RegExp(`${driTokenEsc}\\s*@?${handleBareEsc}\\s+${escapeRegExp(coderBodyFlag)}`, 'i').test(item.body);
-    let coderFromLabel = false;
-    if (coderLabelFlag && Array.isArray(item?.labels)) {
-      coderFromLabel = item.labels.some((label) => {
-        const name = label?.name || '';
-        if (!name) return false;
-        return new RegExp(escapeRegExp(coderLabelFlag), 'i').test(name);
-      });
-    }
-    if (coderFromAuthor || coderFromBody || coderFromLabel) role = 'code';
-  }
+  const coderFromAuthor = author && handleBare && author === handleBare;
+  const authorMia = isAuthorMia(item, normalized);
+  const role = handle !== 'not found' && (authorMia || coderFromAuthor) ? 'code' : 'review';
 
   return { handle, role };
 }
@@ -66,6 +87,16 @@ export function formatDri(dri, youHandle) {
 export function extractAssignee(item) {
   const assignees = item.assignees || [];
   return assignees[0]?.login ? ensureAt(assignees[0].login) : 'unassigned';
+}
+
+export function resolveCoderHandle(item, dri, opts = {}) {
+  const normalized = normalizeDriOpts(opts);
+  const author = ensureAt(item?.user?.login);
+  if (isAuthorMia(item, normalized)) {
+    const handle = dri?.handle;
+    return handle && handle !== 'not found' ? handle : 'not found';
+  }
+  return author;
 }
 
 export function formatAssignee(item, dri, state, opts = {}) {
@@ -91,8 +122,10 @@ export function formatAssignee(item, dri, state, opts = {}) {
 
   let action = '';
   if (includeActionForYou && isYou) {
-    if (driRole === 'code') action = 'pls code';
-    else if (driRole === 'review') action = 'pls review';
+    const coderHandle = resolveCoderHandle(item, dri, state);
+    const coderBare = coderHandle && coderHandle !== 'not found' ? coderHandle.replace(/^@+/, '').toLowerCase() : '';
+    if (coderBare && assigneeBare && coderBare === assigneeBare) action = 'pls code';
+    else if (coderHandle !== 'not found') action = 'pls review';
   }
 
   return `Assignee: ${label}${suffix}${action ? ` (${action})` : ''}`;
