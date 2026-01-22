@@ -253,10 +253,10 @@ function addTopMetaLines(cardState, item, state, li) {
 }
 
 function markSectionStale(section) {
-  setStatus(section, 'Not loaded', '');
+  setStatus(section, 'Not loaded', 'idle');
   cardsForSection(section).forEach((cardState) => {
     cardState.count.textContent = '–';
-    setListPlaceholder(cardState.list, 'Not loaded yet.');
+    setListPlaceholder(cardState.list, 'Not loaded yet.', 'not-loaded');
   });
 }
 
@@ -300,7 +300,7 @@ function makeCard(cfg) {
   const desc = createEl('p', '', cfg.desc);
 
   const list = createEl('ul', 'item-list');
-  setListPlaceholder(list, 'Not loaded yet.');
+  setListPlaceholder(list, 'Not loaded yet.', 'not-loaded');
 
   const footer = createEl('div', 'card-footer');
   const searchLink = createEl('a', 'cta', 'Open search');
