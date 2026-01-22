@@ -39,8 +39,9 @@ describe('app integration (DOM wiring)', () => {
     const cards = document.querySelectorAll('.card');
     expect(cards.length).toBe(config.length);
     expect(document.getElementById('status-pulls')?.textContent).toBe('Not loaded');
+    expect(document.getElementById('status-watch')?.textContent).toBe('Not loaded');
     expect(document.getElementById('status-triage')?.textContent).toBe('Not loaded');
-    expect(document.getElementById('status-issues')?.textContent).toBe('Not loaded');
+    expect(document.getElementById('status-pr-triage')?.textContent).toBe('Not loaded');
   });
 
   it('updates repo title when repo input changes', async () => {

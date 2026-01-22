@@ -1,7 +1,17 @@
 export const config = [
   {
+    id: 'issues-mine',
+    section: 'pulls',
+    grid: 'pullsPriority',
+    label: 'Mine',
+    title: 'Open issues assigned to you',
+    desc: 'Issues where you are the assignee.',
+    queryUsingLabels: 'is:issue is:open assignee:__HANDLE_BARE__',
+    queryUsingBodyText: 'is:issue is:open assignee:__HANDLE_BARE__'
+  },
+  {
     id: 'issues-unlabeled',
-    section: 'issues',
+    section: 'triage',
     label: 'Untriaged',
     title: 'Open issues without labels',
     desc: 'Zero labels attached. Likely need triage.',
@@ -10,7 +20,7 @@ export const config = [
   },
   {
     id: 'issues-assigned',
-    section: 'issues',
+    section: 'triage',
     label: 'In Progress',
     title: 'Open issues with an assignee',
     desc: 'Issues that are currently owned.',
@@ -18,17 +28,9 @@ export const config = [
     queryUsingBodyText: 'is:issue is:open assignee:*'
   },
   {
-    id: 'issues-mine',
-    section: 'issues',
-    label: 'Mine',
-    title: 'Open issues assigned to you',
-    desc: 'Issues where you are the assignee.',
-    queryUsingLabels: 'is:issue is:open assignee:__HANDLE_BARE__',
-    queryUsingBodyText: 'is:issue is:open assignee:__HANDLE_BARE__'
-  },
-  {
     id: 'prs-mine',
     section: 'pulls',
+    grid: 'pullsPriority',
     label: 'Blocking',
     title: 'PRs assigned to you',
     desc: 'You are blocking these PRs as assignee.',
@@ -37,7 +39,7 @@ export const config = [
   },
   {
     id: 'prs-dri-waiting',
-    section: 'pulls',
+    section: 'watch',
     label: 'DRI waiting',
     title: 'PRs: you are DRI, not assignee',
     desc: 'You are DRI, not assigned: waiting on others.',
@@ -46,7 +48,7 @@ export const config = [
   },
   {
     id: 'prs-dri-me',
-    section: 'pulls',
+    section: 'watch',
     label: 'DRI: You',
     title: 'PRs: you are DRI',
     desc: 'PR body lists you as DRI.',
@@ -55,18 +57,18 @@ export const config = [
   },
   {
     id: 'prs-dri-waiting-assignee',
-    section: 'triage',
-    grid: 'triagePriority',
+    section: 'pulls',
+    grid: 'pullsPriority',
     label: 'WAITING',
     tone: 'warn',
-    title: 'PRs with DRI but no assignee',
+    title: 'PRs with DRI but no assignee (pls review)',
     desc: 'DRI declared in body but nobody is assigned. Assign the work.',
     queryUsingLabels: 'is:pr is:open __DRI_LABELS_OR__ no:assignee',
     queryUsingBodyText: 'is:pr is:open in:body "__DRI__" no:assignee'
   },
   {
     id: 'prs-no-dri',
-    section: 'triage',
+    section: 'prTriage',
     label: 'Unowned',
     tone: 'warn',
     title: 'Open PRs with no DRI',
@@ -76,7 +78,7 @@ export const config = [
   },
   {
     id: 'prs-with-dri',
-    section: 'triage',
+    section: 'prTriage',
     label: 'Owned',
     title: 'Open PRs with a DRI',
     desc: 'PR body includes a DRI tag.',
@@ -85,7 +87,7 @@ export const config = [
   },
   {
     id: 'prs-assignee-no-dri',
-    section: 'triage',
+    section: 'prTriage',
     label: 'Needs DRI',
     tone: 'error',
     title: 'PRs with assignee but no DRI',

@@ -405,6 +405,10 @@ section h2 {
   overflow: hidden;
 }
 
+.card[data-span="full"] {
+  grid-column: 1 / -1;
+}
+
 .card::before {
   content: "";
   position: absolute;

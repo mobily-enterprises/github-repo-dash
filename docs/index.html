@@ -73,18 +73,30 @@
 
     <section>
       <div class="section-header">
-        <h2>Your pull requests</h2>
+        <h2>Your actionable items</h2>
         <div class="actions">
-          <button id="load-pulls" aria-controls="prs-grid">Load</button>
+          <button id="load-pulls" aria-controls="pulls-priority-grid prs-grid">Load</button>
           <div id="status-pulls" class="status" role="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
+      <div class="grid priority-grid" id="pulls-priority-grid"></div>
       <div class="grid" id="prs-grid"></div>
     </section>
 
     <section>
       <div class="section-header">
-        <h2>PR assigning and triaging</h2>
+        <h2>Keep an eye on</h2>
+        <div class="actions">
+          <button id="load-watch" aria-controls="watch-grid">Load</button>
+          <div id="status-watch" class="status" role="status" aria-live="polite">Not loaded</div>
+        </div>
+      </div>
+      <div class="grid" id="watch-grid"></div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Issue triaging</h2>
         <div class="actions">
           <button id="load-triage" aria-controls="triage-priority-grid triage-grid">Load</button>
           <div id="status-triage" class="status" role="status" aria-live="polite">Not loaded</div>
@@ -96,13 +108,13 @@
 
     <section>
       <div class="section-header">
-        <h2>Issues</h2>
+        <h2>PR triaging</h2>
         <div class="actions">
-          <button id="load-issues" aria-controls="issues-grid">Load</button>
-          <div id="status-issues" class="status" role="status" aria-live="polite">Not loaded</div>
+          <button id="load-pr-triage" aria-controls="pr-triage-grid">Load</button>
+          <div id="status-pr-triage" class="status" role="status" aria-live="polite">Not loaded</div>
         </div>
       </div>
-      <div class="grid" id="issues-grid"></div>
+      <div class="grid" id="pr-triage-grid"></div>
     </section>
   </div>
 

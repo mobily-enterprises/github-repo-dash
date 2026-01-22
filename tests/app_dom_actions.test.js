@@ -93,20 +93,22 @@ describe('app wiring actions', () => {
     expect(pullsStatus.textContent).toBe('Updated.');
     // ensure the pulls grid has cards (config filtered by section)
     const pullsCards = Array.from(document.querySelectorAll('.card')).filter(
-      (c) => c.closest('#prs-grid') !== null
+      (c) => c.closest('#prs-grid') || c.closest('#pulls-priority-grid')
     );
     const pullsConfigCount = config.filter((c) => c.section === 'pulls').length;
     expect(pullsCards.length).toBe(pullsConfigCount);
   });
 
   it('switching use-body-text marks sections stale and rebuilds queries', async () => {
-    const statusBefore = document.getElementById('status-issues').textContent;
+    const statusBefore = document.getElementById('status-triage').textContent;
     expect(statusBefore).toBe('Not loaded');
     const toggle = document.getElementById('use-body-text');
     toggle.checked = true;
     toggle.dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
-    expect(document.getElementById('status-issues').textContent).toBe('Not loaded');
+    expect(document.getElementById('status-triage').textContent).toBe('Not loaded');
+    expect(document.getElementById('status-watch').textContent).toBe('Not loaded');
+    expect(document.getElementById('status-pr-triage').textContent).toBe('Not loaded');
     expect(document.getElementById('status-pulls').textContent).toBe('Not loaded');
   });
 
@@ -125,11 +127,11 @@ describe('app wiring actions', () => {
     const repoInput = document.getElementById('repo');
     repoInput.value = '';
     repoInput.dispatchEvent(new Event('input', { bubbles: true }));
-    const loadIssues = document.getElementById('load-issues');
-    loadIssues.click();
+    const loadPulls = document.getElementById('load-pulls');
+    loadPulls.click();
     await flush();
-    const statusIssues = document.getElementById('status-issues');
-    expect(statusIssues.textContent).toContain('Enter a repository');
+    const statusPulls = document.getElementById('status-pulls');
+    expect(statusPulls.textContent).toContain('Enter a repository');
   });
 
   it('surfaces errors and keeps status when fetch fails', async () => {
@@ -145,7 +147,7 @@ describe('app wiring actions', () => {
     mockFetchLabels.mockResolvedValueOnce(['DRI:@a', 'DRI:@b', 'DRI:@c', 'DRI:@d']);
     document.getElementById('reset-labels').click();
     await flush();
-    const loadTriage = document.getElementById('load-triage');
+    const loadTriage = document.getElementById('load-pr-triage');
     loadTriage.click();
     await flush();
     const card = Array.from(document.querySelectorAll('.card')).find((c) =>
@@ -168,7 +170,7 @@ describe('app wiring actions', () => {
     mockFetchLabels.mockResolvedValueOnce(['DRI:@a', 'DRI:@b', 'DRI:@c', 'DRI:@d']);
     document.getElementById('reset-labels').click();
     await flush();
-    const loadTriage = document.getElementById('load-triage');
+    const loadTriage = document.getElementById('load-pr-triage');
     loadTriage.click();
     await flush();
     const card = Array.from(document.querySelectorAll('.card')).find((c) =>

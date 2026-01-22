@@ -41,19 +41,23 @@ const resetLabelsBtn = document.getElementById('reset-labels');
 const useBodyTextInput = document.getElementById('use-body-text');
 const loadButtons = {
   pulls: document.getElementById('load-pulls'),
+  watch: document.getElementById('load-watch'),
   triage: document.getElementById('load-triage'),
-  issues: document.getElementById('load-issues')
+  prTriage: document.getElementById('load-pr-triage')
 };
 const statusEls = {
   pulls: document.getElementById('status-pulls'),
+  watch: document.getElementById('status-watch'),
   triage: document.getElementById('status-triage'),
-  issues: document.getElementById('status-issues')
+  prTriage: document.getElementById('status-pr-triage')
 };
 const grids = {
-  issues: document.getElementById('issues-grid'),
+  pullsPriority: document.getElementById('pulls-priority-grid'),
   pulls: document.getElementById('prs-grid'),
+  watch: document.getElementById('watch-grid'),
   triagePriority: document.getElementById('triage-priority-grid'),
-  triage: document.getElementById('triage-grid')
+  triage: document.getElementById('triage-grid'),
+  prTriage: document.getElementById('pr-triage-grid')
 };
 
 // State holders
@@ -280,6 +284,7 @@ function applyStatePatch(patch, { persist = true, markStale = true } = {}) {
 function makeCard(cfg) {
   const card = createEl('article', 'card');
   if (cfg.tone) card.dataset.tone = cfg.tone;
+  if (cfg.span) card.dataset.span = cfg.span;
 
   const header = createEl('div', 'card-header');
   const label = createEl('div', 'label', cfg.label);

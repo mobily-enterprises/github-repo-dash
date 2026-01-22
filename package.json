@@ -40,8 +40,10 @@
     "eslint-plugin-vitest": "^0.5.4",
     "happy-dom": "^20.0.11",
     "prettier": "^3.2.5",
-    "serve": "^14.2.5",
     "typescript": "^5.4.5",
     "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "serve": "^14.2.5"
   }
 }

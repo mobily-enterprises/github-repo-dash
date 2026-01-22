@@ -38,7 +38,7 @@ By default, the dashboard searches **labels** for DRI (and author-MIA flag) toke
   - *Blocking*: `is:pr is:open assignee:<you>`
   - *DRI waiting*: `is:pr is:open label:"DRI:@you" -assignee:<you>` (you’re DRI, someone else is assigned)
   - *DRI: You*: `is:pr is:open label:"DRI:@you"`
-- **PR assigning and triaging**
+- **Issue triaging**
   - *WAITING*: `is:pr is:open label:"DRI:@*"` with `no:assignee` (DRI declared, nobody assigned)
   - *Unowned*: `is:pr is:open NOT label:"DRI:@*"` (no DRI label)
   - *Owned*: `is:pr is:open label:"DRI:@*"` (has a DRI)
