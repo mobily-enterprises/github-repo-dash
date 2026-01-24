@@ -63,8 +63,9 @@ export const config = [
     tone: 'warn',
     title: 'PRs with DRI but no assignee (pls review)',
     desc: 'DRI declared in body but nobody is assigned. Assign the work.',
+    excludeOwnDriLabel: true,
     queryUsingLabels: 'is:pr is:open __DRI_LABELS_OR__ no:assignee',
-    queryUsingBodyText: 'is:pr is:open in:body "__DRI__" no:assignee'
+    queryUsingBodyText: 'is:pr is:open in:body "__DRI__" NOT in:body "__DRI_HANDLE__" no:assignee'
   },
   {
     id: 'prs-no-dri',

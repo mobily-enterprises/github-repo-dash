@@ -48,6 +48,13 @@ describe('buildQuery template selection and DRI label expansions', () => {
     expect(multi).toContain('-label:"DRI:@b"');
   });
 
+  it('omits own DRI label when excludeOwnDriLabel is set', () => {
+    const cfg = { queryUsingLabels: '__DRI_LABELS_OR__', excludeOwnDriLabel: true };
+    const q = buildQuery(cfg, baseState, { driLabels: ['DRI:@Me', 'DRI:@alice'] });
+    expect(q).toContain('label:"DRI:@alice"');
+    expect(q).not.toContain('DRI:@Me');
+  });
+
   it('falls back to body template when label template missing', () => {
     const cfg = { queryUsingBodyText: 'only-body-template __HANDLE_BARE__' };
     const q = buildQuery(cfg, { ...baseState, useBodyText: false });

@@ -8,21 +8,29 @@ function escapeLabelValue(label) {
 // Build GitHub search query from config template and current state.
 export function buildQuery(cfg, state, opts = {}) {
   const useBodySource = !!state.useBodyText;
-  const driLabels = Array.isArray(opts.driLabels) ? opts.driLabels : [];
+  const rawDriLabels = Array.isArray(opts.driLabels) ? opts.driLabels : [];
   const template =
     (useBodySource && cfg.queryUsingBodyText) ||
     (!useBodySource && cfg.queryUsingLabels) ||
     (useBodySource ? cfg.queryUsingLabels : cfg.queryUsingBodyText) ||
     '';
 
+  const usingLabelsTemplate = template === cfg.queryUsingLabels;
+  const ownDriLabel = `${state.driToken || ''}${state.handleBare || ''}`.toLowerCase();
+  const driLabels = rawDriLabels.filter((label) => typeof label === 'string');
+  const labelsForQuery =
+    cfg.excludeOwnDriLabel && usingLabelsTemplate
+      ? driLabels.filter((label) => label.toLowerCase() !== ownDriLabel)
+      : driLabels;
+
   const driLabelsOr =
-    driLabels.length === 0
+    labelsForQuery.length === 0
       ? 'label:"__none__"'
-      : `label:${driLabels.map((label) => `"${escapeLabelValue(label)}"`).join(',')}`;
+      : `label:${labelsForQuery.map((label) => `"${escapeLabelValue(label)}"`).join(',')}`;
   const driLabelsNot =
-    driLabels.length === 0
+    labelsForQuery.length === 0
       ? ''
-      : driLabels.map((label) => `-label:"${escapeLabelValue(label)}"`).join(' ');
+      : labelsForQuery.map((label) => `-label:"${escapeLabelValue(label)}"`).join(' ');
 
   const query = template
     .replace(/__DRI_LABELS_OR__/g, driLabelsOr)
