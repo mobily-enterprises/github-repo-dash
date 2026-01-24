@@ -55,6 +55,16 @@ describe('buildQuery template selection and DRI label expansions', () => {
     expect(q).not.toContain('DRI:@Me');
   });
 
+  it('handles missing driToken/handleBare when filtering DRI labels', () => {
+    const cfg = { queryUsingLabels: '__DRI_LABELS_OR__', excludeOwnDriLabel: true };
+    const q = buildQuery(
+      cfg,
+      { ...baseState, driToken: '', handleBare: '' },
+      { driLabels: ['DRI:@me'] }
+    );
+    expect(q).toContain('label:"DRI:@me"');
+  });
+
   it('falls back to body template when label template missing', () => {
     const cfg = { queryUsingBodyText: 'only-body-template __HANDLE_BARE__' };
     const q = buildQuery(cfg, { ...baseState, useBodyText: false });
